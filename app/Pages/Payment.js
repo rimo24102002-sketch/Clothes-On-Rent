@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import React from 'react'
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 import Ionicons from 'react-native-vector-icons/Ionicons';
-const Payment = () => {
+const Payment = ({navigation}) => {
     return (
         <ScrollView style={{ backgroundColor: '#fffefeff', height: '1000%' }}>
             <View style={{ height: 90, justifyContent: 'center', alignItems: 'center' }}>
@@ -19,7 +19,7 @@ const Payment = () => {
             </View>
             <View style={{ backgroundColor: 'white', padding: 30, height: 200, justifyContent: 'center', alignItems: 'center' }}>
                 <TouchableOpacity style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20, }}>
-                    <Text style={{ fontSize: 18 }}>Confirm Payment</Text>
+                    <Text style={{ fontSize: 18 }} onPress={() => navigation.navigate("Order")}  >Place my order</Text>
                 </TouchableOpacity>
             </View>
         </ScrollView>

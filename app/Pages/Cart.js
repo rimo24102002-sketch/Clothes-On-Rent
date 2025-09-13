@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Image, TouchableOpacity,TextInput } from 'react
 import React from 'react'
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-const Cart = () => {
+const Cart = ({navigation}) => {
     return (
         <ScrollView style={{ backgroundColor: "#F3D5C6", height: '1000%' }}>
             <View style={{ width: '100%', height: 380 }}>
@@ -87,8 +87,8 @@ const Cart = () => {
                      <TextInput placeholder="....." style={{marginTop:'-8'}}></TextInput>
                 </View>
                 <View style={{ backgroundColor: 'white', padding: 30 }}>
-                    <TouchableOpacity style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
-                        <Text style={{ fontSize: 18 }}>Proceed to checkout</Text>
+                    <TouchableOpacity  onPress={() => navigation.navigate("Checkout")}style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
+                        <Text style={{ fontSize: 18 }} >Proceed to checkout</Text>
                     </TouchableOpacity>
                 </View>
             </View>

@@ -18,7 +18,7 @@ const Delete = () => {
                 </View>
                 <View style={{ backgroundColor: "#D9D9D9", borderRadius: 12, marginTop: 20, width: "100%", height: 140, flexDirection: "row" }}>
                     <View>
-                        <Text style={{ fontSize: 16, fontWeight: "700", color: "#000", marginStart: 10, marginTop: 5 }}>Delete account</Text>
+                      <TouchableOpacity ><Text style={{ fontSize: 16, fontWeight: "700", color: "#000", marginStart: 10, marginTop: 5 }} >Delete account</Text></TouchableOpacity>
                         <Text style={{ color: "#000", marginStart: 10 }}>Deleting your account is permanent. When{"\n"}you delete your account, all your profile{"\n"}details, applications, messages, and activity{"\n"}will be permanently removed. If you'd just{"\n"}like to take a break, choose deactivation{"\n"}instead.</Text>
                     </View>
                     <TouchableOpacity style={{ alignSelf: "center", marginLeft: 10 }}>

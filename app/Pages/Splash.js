@@ -1,8 +1,11 @@
 import { View, Text,TouchableOpacity, ScrollView, ImageBackground } from 'react-native'
 import React from 'react'
 import Ionicons from 'react-native-vector-icons/Ionicons';
-const Splash = () => {
+const Splash = ({navigation}) => {
+
+   
   return (
+    
      <ScrollView style={{backgroundColor: "#fdfdfdff",height:'100%' }}>
       <ImageBackground source={require('./splash.png')} style={{ width: "100%",height:730 }} >
       
@@ -12,7 +15,7 @@ const Splash = () => {
         <View style={{backgroundColor: '#fff',width:50,height: 50, borderRadius:7,  alignItems: 'center',   justifyContent: 'center', }}>
           <Ionicons name="chevron-forward" size={24} color="#5a3a2c"  />
         </View>
-        <Text style={{ fontWeight: 'bold', fontSize: 20, color: 'white',bottom:40, alignSelf: 'center',marginRight:15, paddingLeft:45}}>GET STARTED</Text>
+        <Text style={{ fontWeight: 'bold', fontSize: 20, color: 'white',bottom:40, alignSelf: 'center',marginRight:15, paddingLeft:45}} onPress={() => navigation.navigate("Home")} >GET STARTED</Text>
        </TouchableOpacity>
        </ImageBackground>
   </ScrollView>

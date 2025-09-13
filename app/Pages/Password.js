@@ -25,7 +25,7 @@ const Password = () => {
                 <Text style={{ color: "#080808ff", marginTop: 10, marginStart: 30 }}>  Forgot your password?</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ backgroundColor: "rgba(164, 123, 104, 1)", width: '80%', height: 45, borderRadius: 12, justifyContent: "center", alignItems: "center", alignSelf: "center", marginTop: 40 }}>
-                <Text style={{ color: "#fff", fontWeight: "700" }}>Change password</Text>
+                <Text style={{ color: "#fff", fontWeight: "700" }} >Change password</Text>
             </TouchableOpacity>
         </View>
     );

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 
-const Password = () => {
+const Password = ({navigation}) => {
     return (
         <View style={{ height: "100%", width: "100%", backgroundColor: "#ffffffff" }}>
             <Text style={{ fontSize: 22, fontWeight: "700", color: "#000000ff", marginTop: 20, marginStart: 20 }}>Forgot password</Text>
@@ -16,7 +16,7 @@ const Password = () => {
                 <Text style={{ color: "#fff", fontWeight: "700" }}>Send reset link</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ marginTop: 20 }}>
-                <Text style={{ color: "#0f0f0fff", textAlign: "center" }}>
+                <Text style={{ color: "#0f0f0fff", textAlign: "center" }} onPress={() => navigation.navigate("Login")}>
                     Back to Login
                 </Text>
             </TouchableOpacity>

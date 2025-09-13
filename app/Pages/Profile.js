@@ -2,7 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import React from 'react'
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-const Profile = () => {
+const Profile = ({ navigation }) => {
     return (
         <ScrollView style={{ backgroundColor: "#ffffffff", height: '100%' }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center', padding: 10 }}> Profile Setting </Text>
@@ -16,15 +16,17 @@ const Profile = () => {
                 <TextInput placeholder='First Name' value="Haya" style={{ borderBottomWidth: 1, borderColor: '#ccc', width: '45%' }} />
                 <TextInput placeholder='Last Name' value="Pectrus" style={{ borderBottomWidth: 1, borderColor: '#ccc', width: '45%' }} />
             </View>
-            <View style={{ width: '90%', alignSelf: 'center', marginTop: '9%' }}>
-                <TextInput placeholder='Email' value="Haya12@gmail.com" style={{ borderBottomWidth: 1, borderColor: '#ccc', paddingVertical: 8, width: '100%' }} />
+             <View style={{ width: '90%', alignSelf: 'center', height: 50, justifyContent: 'center', flexDirection: 'row', gap: 30 }}>
+                <TextInput placeholder='Address' value="Address" style={{ borderBottomWidth: 1, borderColor: '#ccc', width: '45%' }} />
+                <TextInput placeholder='Email' value="Haya@gmail.com" style={{ borderBottomWidth: 1, borderColor: '#ccc', width: '45%' }} />
             </View>
+
             <View style={{ width: '90%', alignSelf: 'center', marginTop: '9%' }}>
                 <TextInput placeholder='Gender' value="Female" style={{ borderBottomWidth: 1, borderColor: '#ccc', paddingVertical: 8, width: '45%' }} />
                 <TextInput placeholder='Phone' value="(+1) 23456789" style={{ borderBottomWidth: 1, borderColor: '#ccc', paddingVertical: 8, width: '45%', position: 'absolute', right: 0, top: 0 }} />
             </View>
             <View style={{ width: '90%', alignSelf: 'center', marginTop: '20%', justifyContent: 'center', alignItems: 'center', }}>
-                <TouchableOpacity style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
+                <TouchableOpacity onPress={() => navigation.navigate("Eprofile")} style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
                     <Text style={{ fontSize: 18 }}> Save Changes</Text>
                 </TouchableOpacity>
             </View>

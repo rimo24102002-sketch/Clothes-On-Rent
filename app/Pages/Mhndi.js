@@ -1,7 +1,7 @@
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import React from "react";
 
-const Mhndi = () => {
+const Mhndi = ({}) => {
     return (
         <ScrollView style={{ flex: 1, backgroundColor: "white" }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 50, paddingHorizontal: 20, backgroundColor: 'white' }}>
