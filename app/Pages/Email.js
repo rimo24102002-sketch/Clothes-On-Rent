@@ -1,7 +1,6 @@
 import React from 'react';
 import { SafeAreaView, ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
+import Ionicons from "react-native-vector-icons/Ionicons";
 export default function Email() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>

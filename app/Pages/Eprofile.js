@@ -2,16 +2,8 @@ import React from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useDispatch } from 'react-redux';
-import { setRole } from '../redux/Slices/HomeDataSlice';
 
 const Profile = ({ navigation }) => {
-    const dispatch = useDispatch();
-
-    const handleLogout = () => {
-        dispatch(setRole(""));
-    };
-
     return (
         <ScrollView style={{ backgroundColor: 'rgba(243, 213, 198, 1)', height: '1000%' }}>
             <View style={{ flexDirection: "row", alignItems: "center", padding: 30 }}>
@@ -37,7 +29,7 @@ const Profile = ({ navigation }) => {
 
                 <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
                     <Ionicons name="settings-outline" size={20} color="gray" />
-                    <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }} onPress={() => navigation.navigate("Privacy")}>Privacy Setting</Text>
+                    <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }}onPress={() => navigation.navigate("Privacy")}>Privacy Setting</Text>
                     <Ionicons name="chevron-forward" size={18} color="gray" style={{ marginLeft: "auto" }} />
                 </TouchableOpacity>
                 <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
@@ -51,23 +43,22 @@ const Profile = ({ navigation }) => {
                     <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }} onPress={() => navigation.navigate("Delete")}>Delete Account</Text>
                     <Ionicons name="chevron-forward" size={18} color="gray" style={{ marginLeft: "auto" }} />
                 </TouchableOpacity>
-                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
-                    <AntDesign name="exclamationcircleo" size={20} color="grey" />
-                    <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }} onPress={() => navigation.navigate("Complain")} >Issue a compliant</Text>
+                 <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
+                   <AntDesign name="exclamationcircleo" size={20} color="grey" />
+                    <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }}onPress={() => navigation.navigate("Complain")} >Issue a compliant</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleLogout}
-                    style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
+                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
                     <Ionicons name="log-out-outline" size={20} color="gray" />
                     <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }}>Log out</Text>
                 </TouchableOpacity>
-
-            </View>
-
-            <View style={{ width: '90%', alignSelf: 'center', marginTop: '20%', justifyContent: 'center', alignItems: 'center', }}>
-                <TouchableOpacity onPress={() => navigation.navigate("Eprofile")} style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
-                    <Text style={{ fontSize: 18 }}> Switch to seller</Text>
-                </TouchableOpacity>
-            </View>
+              
+                </View>
+                  
+                  <View style={{ width: '90%', alignSelf: 'center', marginTop: '20%', justifyContent: 'center', alignItems: 'center', }}>
+                                <TouchableOpacity   onPress={() => navigation.navigate("Eprofile")}style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
+                                    <Text style={{ fontSize: 18 }}> Switch to seller</Text>
+                                </TouchableOpacity>
+                            </View>
         </ScrollView>
     );
 };

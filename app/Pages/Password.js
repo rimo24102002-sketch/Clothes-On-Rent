@@ -4,7 +4,7 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 const Password = () => {
     return (
         <View style={{ height: "100%", width: "100%", backgroundColor: "#ffffffff" }}>
-            <Text style={{ fontSize: 22, fontWeight: "700", color: "#000000ff", marginTop: 20, marginStart: 20 }}>Change password</Text>
+            <Text style={{ fontSize: 22, fontWeight: "700", color: "#000000ff", marginTop: 20, marginStart: 20 }}>Edit password</Text>
             <Text style={{ color: "#000000ff", marginTop: 10, marginStart: 15 }} >  Your password must be at least 6 characters and{"\n"}  should include a combination of numbers, letters{"\n"}  and special characters (!@$%).</Text>
             <TextInput
                 placeholder="Current password"

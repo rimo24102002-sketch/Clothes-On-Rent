@@ -9,21 +9,10 @@ import {
     addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc
 } from 'firebase/firestore';
 import { auth, db } from '../../firebase'; // make sure you export both db and auth in firebase.js
-import { useState } from "react";
-
+import {useState} from "react";
 //--------------------------------
 // 🔹 Firestore Services
 //--------------------------------
-
-
-// const [name , setName ] = useState("");
-// const [name , setName ] = useState("");
-// const [name , setName ] = useState("");
-// const [name , setName ] = useState("");
-// const [totalPrice , setTotalPrice ] = useState("");
-
-
-// addData("orders", {name : name , address : adress, price : totalPrice})
 
 // ✅ Add data
 export const addData = async (collectionName, data) => {

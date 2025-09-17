@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 
-export default function Logout() {
+export default function Logout({navigation}) {
   const handleLogout = () => {
     Alert.alert('Logout Successful', 'You have been logged out successfully.');
   };
@@ -15,7 +15,7 @@ export default function Logout() {
       <Text style={{fontSize:20,fontWeight:'bold',color:'black',marginBottom:20,textAlign:'center'}}>Logout</Text>
 
       <TouchableOpacity style={{backgroundColor:'#8E6652',padding:15,borderRadius:8,alignItems:'center',marginBottom:10}} onPress={handleLogout}>
-        <Text style={{color:'white',fontSize:16,fontWeight:'bold'}}>Logout</Text>
+        <Text style={{color:'white',fontSize:16,fontWeight:'bold'}}onPress={() => navigation.navigate('Logout')}>Logout</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={{backgroundColor:'gray',padding:15,borderRadius:8,alignItems:'center'}} onPress={handleCancel}>

@@ -6,13 +6,13 @@ import { getFirestore } from 'firebase/firestore';
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD8C3QMfHaeIx9Y_OpQ2UlDY1Zqq9SNIWQ",
-  authDomain: "clothesonrent-e1ea0.firebaseapp.com",
-  projectId: "clothesonrent-e1ea0",
-  storageBucket: "clothesonrent-e1ea0.firebasestorage.app",
-  messagingSenderId: "835751712580",
-  appId: "1:835751712580:web:f1dcf167faae49b5382911",
-  measurementId: "G-S8ELWZ8EC7"
+  apiKey: "AIzaSyD-c_6VdQWf5rHWg4cJt-iZG7mpL-bGyGc",
+  authDomain: "clotherental.firebaseapp.com",
+  projectId: "clotherental",
+  storageBucket: "clotherental.firebasestorage.app",
+  messagingSenderId: "846383262940",
+  appId: "1:846383262940:web:d53576b563f5d8038e1819",
+  measurementId: "G-WJ15GY4D7R"
 };
 
 // Initialize Firebase

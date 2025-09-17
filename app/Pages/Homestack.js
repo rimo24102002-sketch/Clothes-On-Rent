@@ -11,15 +11,14 @@ import Payment from './Payment';
 import Order from './Order';
 import Reviews from './Reviews';
 import Complain from './Complain';
-import Pending from './Pending';
+import CPending from './CPending';
 const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {
   return (
     // <NavigationContainer>
-    <SafeAreaView   style={{ flex: 1, backgroundColor: '#fff' }}>
-      <Stack.Navigator  screenOptions={{
-            headerShown:false}} initialRouteName="Home2">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <Stack.Navigator initialRouteName="Home2">
         <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="Home2" component={Home2} />
         <Stack.Screen name="Mhndi" component={Mhndi} />
@@ -31,7 +30,7 @@ const HomeStack = () => {
         <Stack.Screen name="Order" component={Order} />
         <Stack.Screen name="Reviews" component={Reviews} />
         <Stack.Screen name="Complain" component={Complain} />
- <Stack.Screen name="Pending" component={Pending} />
+ <Stack.Screen name="CPending" component={CPending} />
 
 
       </Stack.Navigator>
