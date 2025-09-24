@@ -7,7 +7,6 @@ import { setRole } from '../redux/Slices/HomeDataSlice';
 
 const Profile = ({ navigation }) => {
     const dispatch = useDispatch();
-
     const handleLogout = () => {
         dispatch(setRole(""));
     };
@@ -31,7 +30,7 @@ const Profile = ({ navigation }) => {
                 style={{ backgroundColor: "#fffefeff", borderRadius: 15, paddingVertical: 25 }} >
                 <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 15, }} >
                     <Ionicons name="create-outline" size={20} color="gray" />
-                    <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }} onPress={() => navigation.navigate("Profile")} >Edit Profile</Text>
+                    <Text style={{ marginLeft: 15, fontSize: 16, color: "#000" }} onPress={() => navigation.navigate("userprofile")} >Edit Profile</Text>
                     <Ionicons name="chevron-forward" size={18} color="gray" style={{ marginLeft: "auto" }} />
                 </TouchableOpacity>
 

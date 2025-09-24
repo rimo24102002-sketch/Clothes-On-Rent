@@ -33,6 +33,7 @@ import Cancel from "./Pages/Cancel";
 import Deliverd from "./Pages/Deliverd";
 import OrderDetail from "./Pages/OrderDetail";
 import Slider from "./Pages/Slider";
+import userprofile from "./Pages/userprofile"
 
 // Screens (Seller)
 import Products from "./Pages/Products";
@@ -74,6 +75,7 @@ const CustomerStack = () => (
     <Stack.Screen name="Deliverd" component={Deliverd} />
     <Stack.Screen name="Cancel" component={Cancel} />
     <Stack.Screen name="OrderDetail" component={OrderDetail} />
+     <Stack.Screen name="userprofile" component={userprofile} />
   </Stack.Navigator>
 );
 

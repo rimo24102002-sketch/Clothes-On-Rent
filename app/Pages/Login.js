@@ -7,7 +7,7 @@ import { login } from "../Helper/firebaseHelper";
 const Login = ({ navigation }) => {
    
   const [email, setEmail] = useState("Test1122@gmail.com");
-  const [password, setPassword] = useState("Test@1122");
+  const [password, setPassword] = useState("11223344");
   const dispatch = useDispatch();
   const handleLogin = async () => {
   
@@ -18,8 +18,6 @@ const Login = ({ navigation }) => {
             
         } 
       };
-
-
  return (
         <ScrollView style={{ flex: 1, backgroundColor: "#fefcfcff" }}>
             <View style={{ width: '60%', height: 50, backgroundColor: "rgba(164, 123, 104, 1)", borderRadius: 20, justifyContent: "center", alignSelf: "center", marginTop: 40, }} >

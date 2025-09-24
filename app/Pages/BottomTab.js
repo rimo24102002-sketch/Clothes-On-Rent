@@ -1,10 +1,10 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Profile from './Profile';
 import Cart from './Cart';
 import HomeStack from './Homestack';
 import Reviews from './Reviews'
+import userprofile from './userprofile'
 
 const Tab = createBottomTabNavigator();
 
@@ -15,7 +15,7 @@ export default function BottomTab() {
         }} initialRouteName='Home'>
             <Tab.Screen name="Home" component={HomeStack} options={{ tabBarIcon: ({ color }) => <Icon name="home-outline" size={30} color="black" /> }} />
             <Tab.Screen name="Cart" component={Cart} options={{ tabBarIcon: ({ color }) => <Icon name="cart-outline" size={30} color="black" /> }} />
-            <Tab.Screen name="Profile" component={Profile} options={{ tabBarIcon: ({ color }) => <Icon name="person-outline" size={30} color="black" /> }} />
+            <Tab.Screen name="Profile" component={userprofile} options={{ tabBarIcon: ({ color }) => <Icon name="person-outline" size={30} color="black" /> }} />
             <Tab.Screen name="Reviews" component={Reviews} options={{ tabBarIcon: ({ color }) => <MaterialIcons name="rate-review" size={26} color="black" /> }} />
         </Tab.Navigator>
     );
