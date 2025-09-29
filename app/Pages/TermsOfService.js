@@ -1,11 +1,45 @@
-import React from 'react';
-import { View, Text, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Feather } from "@expo/vector-icons";
+import { getTermsOfService } from "../Helper/firebaseHelper";
 
-export default function TermsOfService() {
+export default function TermsOfService({ navigation }) {
+  const [termsData, setTermsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTermsOfService();
+  }, []);
+
+  const loadTermsOfService = async () => {
+    try {
+      const data = await getTermsOfService();
+      setTermsData(data);
+    } catch (error) {
+      console.error("Error loading terms of service:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{flex:1,backgroundColor:'#F8F9FA'}}>
+        <View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#fff',borderBottomWidth:1,borderBottomColor:'#E0E0E0'}}>
+          <Text style={{fontSize:18,fontWeight:'600',color:'#8E6652',marginLeft:12}}>Terms of Service</Text>
+        </View>
+        <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+          <ActivityIndicator size="large" color="#8E6652" />
+          <Text style={{marginTop:16,color:'#666'}}>Loading Terms of Service...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={{flex:1,backgroundColor:'#F1DCD1'}}>
-      <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#F1DCD1',borderBottomWidth:1,borderBottomColor:'#E5D5C8'}}>
-        <Text style={{fontSize:18,fontWeight:'600',color:'#8E6652'}}>Terms of Service</Text>
+    <SafeAreaView style={{flex:1,backgroundColor:'#F8F9FA'}}>
+      <View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#fff',borderBottomWidth:1,borderBottomColor:'#E0E0E0'}}>
+        <Text style={{fontSize:18,fontWeight:'600',color:'#8E6652',marginLeft:12}}>Terms of Service</Text>
       </View>
 
       <ScrollView style={{flex:1,paddingHorizontal:20}} showsVerticalScrollIndicator={false}>

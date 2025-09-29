@@ -95,8 +95,8 @@ const Login = ({ navigation }) => {
                     style={{ backgroundColor: "#F4F4F4", borderRadius: 10, width: '80%', height: 40, paddingHorizontal: 10, marginStart: 40, marginTop: 5 }}>
                 </TextInput>
 
-                         <TouchableOpacity style={{ marginTop: 5 }}>
-                    <Text style={{ color: "#3b3b3bff", fontWeight: "300", fontSize: 10, textAlign: "right", marginRight: 35 }} onPress={() => navigation.navigate("ForgotPassword")}>Forgot Password</Text>
+                <TouchableOpacity style={{ marginTop: 5 }} onPress={() => navigation.navigate("ForgotPassword")}>
+                    <Text style={{ color: "#3b3b3bff", fontWeight: "300", fontSize: 10, textAlign: "right", marginRight: 35 }}>Forgot Password</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={{ 
@@ -123,8 +123,8 @@ const Login = ({ navigation }) => {
                     <Text style={{ color: "#3b3b3bff", fontWeight: "200", fontSize: 10, textAlign: "center", marginTop: 10 }}>Don’t have an account? </Text>
                 </View>
                  <View style={{ flexDirection: "row", justifyContent: "center" }}>
-                <TouchableOpacity>
-                        <Text style={{ color: "rgba(164, 123, 104, 1)", fontWeight: "800", fontSize: 11, marginTop: 10 }} onPress={() => navigation.navigate("SignUp")}>SignUp</Text>
+                <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+                        <Text style={{ color: "rgba(164, 123, 104, 1)", fontWeight: "800", fontSize: 11, marginTop: 10 }}>SignUp</Text>
                     </TouchableOpacity>
                     </View>
             </View>

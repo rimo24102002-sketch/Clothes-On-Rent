@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, ScrollView } from "react-native";
+import { useSelector } from "react-redux";
+import { listOrdersBySeller, updateOrder } from "../Helper/firebaseHelper";
 
 export default function SellerOrders() {
-  const [orders] = useState([
-    { id: "1", customer: "Ali Khan", address: "Street 123, Karachi", items: ["Lehanga", "Kurti"], payment: "Cash on Delivery", status: "Pending" },
-    { id: "2", customer: "Sara Ahmed", address: "Street 45, Lahore", items: ["Bridal Lehanga"], payment: "Cash on Delivery", status: "Delivered" },
-  ]);
+  const user = useSelector((s) => s.home.user);
+  const sellerId = user?.sellerId || user?.uid || "";
+  const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("All");
+
+  useEffect(() => {
+    const load = async () => {
+      if (!sellerId) { setOrders([]); return; }
+      const list = await listOrdersBySeller(sellerId);
+      setOrders(list);
+    };
+    load();
+  }, [sellerId]);
 
   const filteredOrders = filter === "All" ? orders : orders.filter((o) => o.status === filter);
 
@@ -19,6 +29,22 @@ export default function SellerOrders() {
       <Text style={{ fontWeight: "bold", marginTop: 6, marginBottom: 4 }}>{item.payment}</Text>
       <View style={{ backgroundColor: item.status === "Pending" ? "#FAD7A0" : item.status === "Delivered" ? "#ABEBC6" : item.status === "Canceled" ? "#F5B7B1" : "#D7DBDD", alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginBottom: 4 }}>
         <Text style={{ color: item.status === "Pending" ? "#7e5005ff" : item.status === "Delivered" ? "#07863cff" : item.status === "Canceled" ? "#a7190aff" : "#566573", fontSize: 12, fontWeight: "bold" }}>{item.status}</Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <TouchableOpacity style={{ backgroundColor: '#8E6652', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={async () => {
+          await updateOrder(item.id, { status: 'Delivered' });
+          const list = await listOrdersBySeller(sellerId);
+          setOrders(list);
+        }}>
+          <Text style={{ color: '#fff', fontWeight: '700' }}>Mark Delivered</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ backgroundColor: '#ccc', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={async () => {
+          await updateOrder(item.id, { status: 'Canceled' });
+          const list = await listOrdersBySeller(sellerId);
+          setOrders(list);
+        }}>
+          <Text style={{ color: '#333', fontWeight: '700' }}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

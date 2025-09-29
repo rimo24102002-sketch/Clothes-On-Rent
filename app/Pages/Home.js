@@ -11,9 +11,8 @@ const Home = ({navigation}) => {
       <TouchableOpacity style={{ width:"35%", height: 35, backgroundColor: "#a47b68", borderRadius: 15, alignItems: 'center', justifyContent: 'center', fontSize: 20, marginLeft: "30%", color: "white",marginTop:20 }}>
         <Text style={{fontSize: 17, fontFamily: 'Times New Roman', color: 'white'}} >Customer</Text>
         </TouchableOpacity>
-      <TouchableOpacity style={{ width: "35%", height: 35, backgroundColor: "#a47b68", borderRadius: 15, alignItems: 'center', justifyContent: 'center', fontSize: 20,marginLeft: "30%", color: "white",marginTop:18 }}>
-          <Text style={{fontSize: 17, fontFamily: 'Times New Roman', color: 'white'}}onPress={() => navigation.navigate("SignUp")}>Seller</Text>
-
+      <TouchableOpacity style={{ width: "35%", height: 35, backgroundColor: "#a47b68", borderRadius: 15, alignItems: 'center', justifyContent: 'center', fontSize: 20,marginLeft: "30%", color: "white",marginTop:18 }} onPress={() => navigation.navigate("SignUp")}>
+          <Text style={{fontSize: 17, fontFamily: 'Times New Roman', color: 'white'}}>Seller</Text>
       </TouchableOpacity>
     </ImageBackground>
     </View>

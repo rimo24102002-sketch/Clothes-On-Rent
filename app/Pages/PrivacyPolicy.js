@@ -1,11 +1,48 @@
-import React from 'react';
-import { View, Text, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Feather } from "@expo/vector-icons";
+import { getPrivacyPolicy } from "../Helper/firebaseHelper";
 
-export default function PrivacyPolicy() {
+export default function PrivacyPolicy({ navigation }) {
+  const [privacyPolicy, setPrivacyPolicy] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPrivacyPolicy();
+  }, []);
+
+  const loadPrivacyPolicy = async () => {
+    try {
+      const data = await getPrivacyPolicy();
+      setPrivacyPolicy(data);
+    } catch (error) {
+      console.error("Error loading privacy policy:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{flex:1,backgroundColor:'#F8F9FA'}}>
+        <View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#fff',borderBottomWidth:1,borderBottomColor:'#E0E0E0'}}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Feather name="chevron-left" size={24} color="#8E6652" />
+          </TouchableOpacity>
+          <Text style={{fontSize:18,fontWeight:'600',color:'#333',marginLeft:12}}>Privacy Policy</Text>
+        </View>
+        <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+          <ActivityIndicator size="large" color="#8E6652" />
+          <Text style={{marginTop:16,color:'#666'}}>Loading Privacy Policy...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={{flex:1,backgroundColor:'#F1DCD1'}}>
-      <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#F1DCD1',borderBottomWidth:1,borderBottomColor:'#E5D5C8'}}>
-        <Text style={{fontSize:18,fontWeight:'600',color:'#8E6652'}}>Privacy Policy</Text>
+    <SafeAreaView style={{flex:1,backgroundColor:'#F8F9FA'}}>
+      <View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#fff',borderBottomWidth:1,borderBottomColor:'#E0E0E0'}}>
+        <Text style={{fontSize:18,fontWeight:'600',color:'#8E6652',marginLeft:12}}>Privacy Policy</Text>
       </View>
 
       <ScrollView style={{flex:1,paddingHorizontal:20}} showsVerticalScrollIndicator={false}>

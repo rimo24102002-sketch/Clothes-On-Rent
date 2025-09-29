@@ -92,11 +92,11 @@ export default function DeleteAccount({navigation}) {
         <Text style={{fontSize:14,color:'#666',lineHeight:20}}>Deleting your account will permanently remove all your data, including profile information, orders, and history. This action cannot be undone.</Text>
       </View>
 
-      <TouchableOpacity style={{backgroundColor:'#f44336',padding:15,borderRadius:8,alignItems:'center',marginBottom:10,opacity:isLoading?0.7:1}} onPress={handleDeleteAccount} disabled={isLoading}>
+      <TouchableOpacity style={{backgroundColor:'#8E6652',padding:15,borderRadius:8,alignItems:'center',marginBottom:10,opacity:isLoading?0.7:1}} onPress={handleDeleteAccount} disabled={isLoading}>
         {isLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={{color:'white',fontSize:16,fontWeight:'bold'}}>Delete Account Forever</Text>}
       </TouchableOpacity>
 
-      <TouchableOpacity style={{backgroundColor:'#4caf50',padding:15,borderRadius:8,alignItems:'center'}} onPress={handleCancel} disabled={isLoading}>
+      <TouchableOpacity style={{backgroundColor:'#8E6652',padding:15,borderRadius:8,alignItems:'center'}} onPress={handleCancel} disabled={isLoading}>
         <Text style={{color:'white',fontSize:16,fontWeight:'bold'}}>Keep My Account</Text>
       </TouchableOpacity>
     </SafeAreaView>

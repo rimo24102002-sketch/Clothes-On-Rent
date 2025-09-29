@@ -30,6 +30,7 @@ import ComplaintMg from './Pages/ComplaintMg';
 import BottomTabSeller from './Pages/BottomTabSeller';
 import Notification from './Pages/Notification';
 import Management from './Pages/Management';
+import NotificationSettings from './Pages/NotificationSettings';
 
 // Screens (Customer)
 import Profiles from './Pages/Profiles';
@@ -86,6 +87,7 @@ const SellerStack = () => (
     <Stack.Screen name="ComplaintMg" component={ComplaintMg} />
     <Stack.Screen name="Notification" component={Notification} />
     <Stack.Screen name="Management" component={Management}/>
+    <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
   </Stack.Navigator>
 );
 

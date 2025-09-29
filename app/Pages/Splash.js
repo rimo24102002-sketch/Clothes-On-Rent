@@ -11,11 +11,11 @@ const Splash = ({navigation}) => {
         <Text style={{ fontWeight: 'bold', fontSize: 24, marginLeft: 20 }}>Rent Clothes</Text>
         <Text style={{ fontSize: 24, marginLeft: 20 }}>LAAM</Text>
 
-        <TouchableOpacity style={{ backgroundColor: "rgba(164, 123, 104, 1)", borderRadius: 10, width: "60%", height: 50, alignSelf: 'center', marginTop: 530, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+        <TouchableOpacity style={{ backgroundColor: "rgba(164, 123, 104, 1)", borderRadius: 10, width: "60%", height: 50, alignSelf: 'center', marginTop: 530, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }} onPress={() => navigation.navigate("Home")}>
           <View style={{ backgroundColor: '#fff', width: 40, height: 40, borderRadius: 7, alignItems: 'center', justifyContent: 'center', marginRight: 0 }}>
             <Ionicons name="chevron-forward" size={24} color="#5a3a2c" />
           </View>
-          <Text style={{ fontWeight: 'bold', fontSize: 18, color: 'white', }}onPress={() => navigation.navigate("Home")}>GET STARTED</Text>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, color: 'white', }}>GET STARTED</Text>
         </TouchableOpacity>
 
       </ImageBackground>

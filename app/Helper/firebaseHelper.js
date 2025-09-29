@@ -1,5 +1,5 @@
 // firestoreService.js
-import {createUserWithEmailAndPassword,sendPasswordResetEmail,signInWithEmailAndPassword,signOut} from "firebase/auth";
+import {createUserWithEmailAndPassword,sendPasswordResetEmail,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider} from "firebase/auth";
 import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc, query, where} from 'firebase/firestore';
 import { auth, db } from '../../firebase'; 
 
@@ -100,6 +100,19 @@ export const handleSignUp = async (email, password, extraData = {}) => {
         };
 
         await setDoc(doc(db, "users", user.uid), userData);
+
+        // If Seller, also create/merge a sellers/{sellerId} doc for settings/dashboard consistency
+        if (extraData.role === "Seller") {
+            await setDoc(doc(db, "sellers", sellerId), {
+                uid: user.uid,
+                sellerId,
+                name: extraData.name || "",
+                email: user.email,
+                address: extraData.address || "",
+                notificationsEnabled: true,
+                createdAt: new Date().toISOString(),
+            }, { merge: true });
+        }
         return userData;
     } catch (error) {
         console.error("Error signing up:", error.message);
@@ -129,10 +142,15 @@ export const login = async (email, password) => {
 // ✅ Forgot Password
 export const forgotPassword = async (email) => {
     try {
+        if (!email) {
+            throw new Error("Email is required");
+        }
+        
         await sendPasswordResetEmail(auth, email);
-        console.log("Password reset email sent!");
+        console.log("Password reset email sent to:", email);
+        return true;
     } catch (error) {
-        console.error("Error sending reset email:", error.message);
+        console.error("Error sending reset email:", error.code, error.message);
         throw error;
     }
 };
@@ -230,6 +248,527 @@ export const deleteNotification = async (id) => {
         throw error;
     }
 };
+
+//--------------------------------
+// 🔹 Products (Seller)
+//--------------------------------
+
+export const listProductsBySeller = async (sellerId) => {
+    try {
+        const q = query(collection(db, "products"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        return items;
+    } catch (e) {
+        console.error("Error listing products:", e);
+        throw e;
+    }
+};
+
+export const addProduct = async (sellerId, product) => {
+    try {
+        const payload = { 
+            ...product, 
+            sizes: product?.sizes || ["S","M","L"],
+            securityFee: Number(product?.securityFee || 0),
+            sellerId, 
+            createdAt: Date.now() 
+        };
+        const ref = await addDoc(collection(db, "products"), payload);
+        return ref.id;
+    } catch (e) {
+        console.error("Error adding product:", e);
+        throw e;
+    }
+};
+
+export const updateProduct = async (id, updates) => {
+    try {
+        const payload = { ...updates };
+        if (payload.securityFee !== undefined) payload.securityFee = Number(payload.securityFee) || 0;
+        await updateDoc(doc(db, "products", id), payload);
+    } catch (e) {
+        console.error("Error updating product:", e);
+        throw e;
+    }
+};
+
+export const deleteProduct = async (id) => {
+    try {
+        await deleteDoc(doc(db, "products", id));
+    } catch (e) {
+        console.error("Error deleting product:", e);
+        throw e;
+    }
+};
+
+//--------------------------------
+// 🔹 Logistics: Pickups, Deliveries, Orders (Seller)
+//--------------------------------
+
+export const listPickupsBySeller = async (sellerId) => {
+    try {
+        const q = query(collection(db, "pickups"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        return items;
+    } catch (e) {
+        console.error("Error listing pickups:", e);
+        throw e;
+    }
+};
+
+export const createPickup = async (sellerId, payload) => {
+    try {
+        const data = { ...payload, sellerId, createdAt: Date.now(), status: payload?.status || 'Pending' };
+        const ref = await addDoc(collection(db, "pickups"), data);
+        return ref.id;
+    } catch (e) {
+        console.error("Error creating pickup:", e);
+        throw e;
+    }
+};
+
+export const updatePickup = async (id, updates) => {
+    try {
+        await updateDoc(doc(db, "pickups", id), updates);
+    } catch (e) {
+        console.error("Error updating pickup:", e);
+        throw e;
+    }
+};
+
+export const listDeliveriesBySeller = async (sellerId) => {
+    try {
+        const q = query(collection(db, "deliveries"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        return items;
+    } catch (e) {
+        console.error("Error listing deliveries:", e);
+        throw e;
+    }
+};
+
+export const updateDelivery = async (id, updates) => {
+    try {
+        await updateDoc(doc(db, "deliveries", id), updates);
+    } catch (e) {
+        console.error("Error updating delivery:", e);
+        throw e;
+    }
+};
+
+export const listOrdersBySeller = async (sellerId) => {
+    try {
+        const q = query(collection(db, "orders"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        return items;
+    } catch (e) {
+        console.error("Error listing orders:", e);
+        throw e;
+    }
+};
+
+export const updateOrder = async (id, updates) => {
+    try {
+        await updateDoc(doc(db, "orders", id), updates);
+    } catch (e) {
+        console.error("Error updating order:", e);
+        throw e;
+    }
+};
+
+//--------------------------------
+// 🔹 Profile Services (Missing Functions)
+//--------------------------------
+
+// ✅ Get user profile by UID
+export const getUserProfile = async (uid) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+            return { uid, ...snap.data() };
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting user profile:", error);
+        throw error;
+    }
+};
+
+// ✅ Update user profile (safe merge)
+export const updateUserProfile = async (uid, data) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await setDoc(userRef, { ...data, updatedAt: Date.now() }, { merge: true });
+        return true;
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Account Settings Services
+//--------------------------------
+
+// ✅ Change Password
+export const changePassword = async (currentPassword, newPassword) => {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error("No user is currently logged in");
+        }
+
+        // Re-authenticate user with current password
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+        
+        // Update password
+        await updatePassword(user, newPassword);
+        console.log("Password updated successfully");
+        return true;
+    } catch (error) {
+        console.error("Error changing password:", error);
+        throw error;
+    }
+};
+
+// ✅ Send Support Email
+export const sendSupportEmail = async (supportData) => {
+    try {
+        const docRef = await addDoc(collection(db, "support_emails"), {
+            ...supportData,
+            timestamp: Date.now(),
+            status: "pending",
+            createdAt: new Date().toISOString(),
+        });
+        console.log("Support email sent with ID:", docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error sending support email:", error);
+        throw error;
+    }
+};
+
+// ✅ Send Seller Complaint to Admin
+export const sendSellerComplaint = async (complaintData) => {
+    try {
+        const docRef = await addDoc(collection(db, "seller_complaints"), {
+            ...complaintData,
+            timestamp: Date.now(),
+            status: "pending", // pending, in_progress, resolved
+            priority: complaintData.priority || "medium", // low, medium, high
+            createdAt: new Date().toISOString(),
+            adminResponse: null,
+            respondedAt: null,
+        });
+        console.log("Seller complaint sent to admin with ID:", docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error sending seller complaint:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Seller's Complaint History
+export const getSellerComplaints = async (sellerId) => {
+    try {
+        const q = query(
+            collection(db, "seller_complaints"), 
+            where("sellerId", "==", sellerId),
+            where("timestamp", ">=", 0) // Add ordering
+        );
+        const snap = await getDocs(q);
+        const complaints = [];
+        snap.forEach(d => complaints.push({ id: d.id, ...d.data() }));
+        return complaints.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    } catch (error) {
+        console.error("Error getting seller complaints:", error);
+        throw error;
+    }
+};
+
+// ✅ Get seller reviews
+export const getSellerReviews = async (sellerId) => {
+    try {
+        const q = query(collection(db, "reviews"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const reviews = [];
+        snap.forEach(d => reviews.push({ id: d.id, ...d.data() }));
+        return reviews;
+    } catch (error) {
+        console.error("Error getting seller reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Add response to review
+export const addReviewResponse = async (reviewId, response) => {
+    try {
+        await updateDoc(doc(db, "reviews", reviewId), {
+            sellerResponse: response,
+            respondedAt: new Date().toISOString()
+        });
+        console.log("Review response added successfully");
+    } catch (error) {
+        console.error("Error adding review response:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Seller Notification Settings
+export const getSellerNotificationSettings = async (sellerId) => {
+    try {
+        const docRef = doc(db, "seller_notification_settings", sellerId);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            return docSnap.data();
+        } else {
+            // Return default settings if none exist
+            const defaultSettings = {
+                orders: true,
+                payments: true,
+                reviews: true,
+                reminders: true
+            };
+            
+            // Create default settings in database
+            await setDoc(docRef, {
+                ...defaultSettings,
+                sellerId,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            
+            return defaultSettings;
+        }
+    } catch (error) {
+        console.error("Error getting notification settings:", error);
+        throw error;
+    }
+};
+
+// ✅ Update Seller Notification Settings
+export const updateSellerNotificationSettings = async (sellerId, settings) => {
+    try {
+        const docRef = doc(db, "seller_notification_settings", sellerId);
+        await updateDoc(docRef, {
+            ...settings,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Notification settings updated successfully");
+    } catch (error) {
+        console.error("Error updating notification settings:", error);
+        throw error;
+    }
+};
+
+// ✅ Get help center articles
+export const getHelpArticles = async () => {
+    try {
+        const snap = await getDocs(collection(db, "help_articles"));
+        const articles = [];
+        snap.forEach(d => articles.push({ id: d.id, ...d.data() }));
+        return articles.sort((a, b) => (a.order || 0) - (b.order || 0));
+    } catch (error) {
+        console.error("Error getting help articles:", error);
+        throw error;
+    }
+};
+
+// ✅ Get privacy policy
+export const getPrivacyPolicy = async () => {
+    try {
+        const docRef = doc(db, "legal_documents", "privacy_policy");
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+            return snap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting privacy policy:", error);
+        throw error;
+    }
+};
+
+// ✅ Get terms of service
+export const getTermsOfService = async () => {
+    try {
+        const docRef = doc(db, "legal_documents", "terms_of_service");
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+            return snap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting terms of service:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Complaint Management (Seller)
+//--------------------------------
+
+// ✅ Get all complaints for a seller
+export const listComplaintsBySeller = async (sellerId) => {
+    try {
+        const q = query(collection(db, "complaints"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        return items;
+    } catch (e) {
+        console.error("Error listing complaints:", e);
+        throw e;
+    }
+};
+
+// ✅ Create a new complaint (usually from customer, but seller can create too)
+export const createComplaint = async (sellerId, complaint) => {
+    try {
+        const payload = {
+            ...complaint,
+            sellerId,
+            status: complaint?.status || "Open",
+            priority: complaint?.priority || "Medium",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        };
+        const ref = await addDoc(collection(db, "complaints"), payload);
+        return ref.id;
+    } catch (e) {
+        console.error("Error creating complaint:", e);
+        throw e;
+    }
+};
+
+// ✅ Update complaint (status, response, etc.)
+export const updateComplaint = async (id, updates) => {
+    try {
+        const payload = { 
+            ...updates, 
+            updatedAt: Date.now() 
+        };
+        await updateDoc(doc(db, "complaints", id), payload);
+        return true;
+    } catch (e) {
+        console.error("Error updating complaint:", e);
+        throw e;
+    }
+};
+
+// ✅ Delete complaint
+export const deleteComplaint = async (id) => {
+    try {
+        await deleteDoc(doc(db, "complaints", id));
+        return true;
+    } catch (e) {
+        console.error("Error deleting complaint:", e);
+        throw e;
+    }
+};
+
+// ✅ Add response to complaint
+export const addComplaintResponse = async (id, response) => {
+    try {
+        await updateDoc(doc(db, "complaints", id), {
+            response,
+            status: "In Progress",
+            respondedAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+        return true;
+    } catch (e) {
+        console.error("Error adding complaint response:", e);
+        throw e;
+    }
+};
+
+// ✅ Mark complaint as resolved
+export const resolveComplaint = async (id, resolution = "") => {
+    try {
+        await updateDoc(doc(db, "complaints", id), {
+            status: "Resolved",
+            resolution,
+            resolvedAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+        return true;
+    } catch (e) {
+        console.error("Error resolving complaint:", e);
+        throw e;
+    }
+};
+
+// ✅ Add sample complaints for testing (remove this in production)
+export const addSampleComplaints = async (sellerId) => {
+    try {
+        console.log("addSampleComplaints called with sellerId:", sellerId);
+        
+        if (!sellerId) {
+            throw new Error("Seller ID is required");
+        }
+        
+        const sampleComplaints = [
+            {
+                orderId: "ORD-1001",
+                customer: "John Doe",
+                customerEmail: "john@example.com",
+                type: "Product Quality",
+                priority: "High",
+                description: "Received item with a tear on the sleeve. Very disappointed with the quality.",
+                status: "Open"
+            },
+            {
+                orderId: "ORD-1002", 
+                customer: "Sarah Wilson",
+                customerEmail: "sarah@example.com",
+                type: "Late Delivery",
+                priority: "Medium",
+                description: "Order was supposed to be delivered on August 23rd but arrived 3 days late.",
+                status: "In Progress",
+                response: "We apologize for the delay. We've contacted the delivery service and are investigating."
+            },
+            {
+                orderId: "ORD-1003",
+                customer: "Mike Brown", 
+                customerEmail: "mike@example.com",
+                type: "Wrong Size",
+                priority: "Low",
+                description: "Ordered size M but received size L. Need to exchange.",
+                status: "Resolved",
+                response: "Exchange processed successfully. New item shipped.",
+                resolution: "Customer satisfied with exchange process."
+            }
+        ];
+
+        console.log("Creating", sampleComplaints.length, "sample complaints...");
+        
+        for (let i = 0; i < sampleComplaints.length; i++) {
+            const complaint = sampleComplaints[i];
+            console.log(`Creating complaint ${i + 1}:`, complaint);
+            const complaintId = await createComplaint(sellerId, complaint);
+            console.log(`Complaint ${i + 1} created with ID:`, complaintId);
+        }
+        
+        console.log("All sample complaints added successfully!");
+        return true;
+    } catch (error) {
+        console.error("Error adding sample complaints:", error);
+        throw error;
+    }
+};
+
 //Cloudinary Upload
 export const uploadImageToCloudinary = async (imageUri) => {
     const CLOUD_NAME = "dquqfgjjv";

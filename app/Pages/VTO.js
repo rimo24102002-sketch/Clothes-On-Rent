@@ -8,7 +8,7 @@ const VTO = ({navigation}) => {
                 <View style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <Text style={{ textAlign: "center" }}>Take a full-front body photo{"\n"} using a mobile device</Text>
                     <View style={{ width: "100%",height: 50, justifyContent: 'space-between', alignItems: 'center', }}>
-                        <TouchableOpacity><Ionicons name="camera-outline" size={50} color="black" onPress={() => navigation.navigate("Cart")} /></TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate("Cart")}><Ionicons name="camera-outline" size={50} color="black" /></TouchableOpacity>
                     </View>
                 </View>
             </View>

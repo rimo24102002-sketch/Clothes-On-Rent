@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView, Alert } from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useSelector } from 'react-redux';
+import { createPickup, listPickupsBySeller, updatePickup } from '../Helper/firebaseHelper';
 
 export default function PickupManagement() {
+  const user = useSelector((s) => s.home.user);
+  const sellerId = user?.sellerId || user?.uid || '';
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [addVisible, setAddVisible] = useState(false);
   const [assignVisible, setAssignVisible] = useState(false);
+  const [pickups, setPickups] = useState([]);
+  const [form, setForm] = useState({ orderId: '', customer: '', address: '', startDate: '', rentalDays: '' });
 
-  const pickups = [
-    { id: 'P1', orderId: 'ORD-1001', customer: 'Ali Khan', address: 'Lahore, Pakistan', startDate: '2025-09-01', rentalDays: 3, endDate: '2025-09-04', status: 'Pending', rider: null },
-    { id: 'P2', orderId: 'ORD-1002', customer: 'Ahmed Ali', address: 'Karachi, Pakistan', startDate: '2025-09-02', rentalDays: 2, endDate: '2025-09-04', status: 'Scheduled', rider: { name: 'Rider 1', vehicle: 'Bike' } }
-  ];
+  useEffect(() => {
+    const load = async () => {
+      if (!sellerId) { setPickups([]); return; }
+      const list = await listPickupsBySeller(sellerId);
+      setPickups(list);
+    };
+    load();
+  }, [sellerId]);
 
   const riders = [
     { id: 'r1', name: 'Rider 1', phone: '03001234567', vehicle: 'Bike' },
@@ -102,16 +112,24 @@ export default function PickupManagement() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18 }}>
             <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 10 }}>Add Pickup</Text>
-            <TextInput placeholder="Order ID" style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
-            <TextInput placeholder="Customer Name" style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
-            <TextInput placeholder="Address" style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
-            <TextInput placeholder="Rental Start (YYYY-MM-DD)" style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
-            <TextInput placeholder="Rental Days" style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
+            <TextInput placeholder="Order ID" value={form.orderId} onChangeText={(t) => setForm({ ...form, orderId: t })} style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
+            <TextInput placeholder="Customer Name" value={form.customer} onChangeText={(t) => setForm({ ...form, customer: t })} style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
+            <TextInput placeholder="Address" value={form.address} onChangeText={(t) => setForm({ ...form, address: t })} style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
+            <TextInput placeholder="Rental Start (YYYY-MM-DD)" value={form.startDate} onChangeText={(t) => setForm({ ...form, startDate: t })} style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
+            <TextInput placeholder="Rental Days" value={form.rentalDays} onChangeText={(t) => setForm({ ...form, rentalDays: t })} style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <TouchableOpacity style={{ padding: 10, borderWidth: 1, borderRadius: 10, borderColor: '#ccc' }} onPress={() => setAddVisible(false)}>
                 <Text style={{ color: '#888' }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={{ padding: 10, borderRadius: 10, backgroundColor: '#8E6652' }} onPress={() => setAddVisible(false)}>
+              <TouchableOpacity style={{ padding: 10, borderRadius: 10, backgroundColor: '#8E6652' }} onPress={async () => {
+                try {
+                  await createPickup(sellerId, form);
+                  setAddVisible(false);
+                  setForm({ orderId: '', customer: '', address: '', startDate: '', rentalDays: '' });
+                  const list = await listPickupsBySeller(sellerId);
+                  setPickups(list);
+                } catch (e) { Alert.alert('Error', 'Failed to create'); }
+              }}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Create</Text>
               </TouchableOpacity>
             </View>
@@ -123,7 +141,17 @@ export default function PickupManagement() {
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18 }}>
             <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 10 }}>Assign Rider</Text>
             {riders.map(r => (
-              <TouchableOpacity key={r.id} style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, marginBottom: 8 }}>
+              <TouchableOpacity key={r.id} style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, marginBottom: 8 }} onPress={async () => {
+                try {
+                  const first = pickups[0];
+                  if (first?.id) {
+                    await updatePickup(first.id, { rider: { name: r.name, vehicle: r.vehicle }, status: 'Scheduled' });
+                    const list = await listPickupsBySeller(sellerId);
+                    setPickups(list);
+                  }
+                  setAssignVisible(false);
+                } catch (e) { Alert.alert('Error', 'Failed to assign'); }
+              }}>
                 <Ionicons name="bicycle-outline" size={18} color="#8E6652" style={{ marginRight: 10 }} />
                 <View>
                   <Text style={{ fontWeight: '700' }}>{r.name}</Text>

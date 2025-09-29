@@ -1,26 +1,84 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, FlatList, ScrollView, Alert } from "react-native";
+import { useSelector } from "react-redux";
+import { listDeliveriesBySeller, updateDelivery } from "../Helper/firebaseHelper";
+import { Feather } from "@expo/vector-icons";
 
 export default function DeliveryManagement() {
-  const [deliveries] = useState([
-    { id: "D1", orderId: "ORD-1001", customer: "John Doe", address: "123 Main St, Karachi", driver: "Not Assigned", status: "Scheduled" },
-    { id: "D2", orderId: "ORD-1002", customer: "Sara Ahmed", address: "45 Street, Lahore", driver: "Ali Raza", status: "In Transit" },
-    { id: "D3", orderId: "ORD-1003", customer: "Bilal Khan", address: "Mall Road, Lahore", driver: "Ahmed Khan", status: "Delivered" },
-  ]);
+  const user = useSelector((s) => s.home.user);
+  const sellerId = user?.sellerId || user?.uid || "";
+  const [deliveries, setDeliveries] = useState([]);
   const [filter, setFilter] = useState("All");
+
+  useEffect(() => {
+    const load = async () => {
+      if (!sellerId) { setDeliveries([]); return; }
+      const list = await listDeliveriesBySeller(sellerId);
+      setDeliveries(list);
+    };
+    load();
+  }, [sellerId]);
 
   const filteredDeliveries = filter === "All" ? deliveries : deliveries.filter((d) => d.status === filter);
 
+  const updateDeliveryStatus = async (deliveryId, newStatus) => {
+    try {
+      await updateDelivery(deliveryId, { status: newStatus, updatedAt: Date.now() });
+      const list = await listDeliveriesBySeller(sellerId);
+      setDeliveries(list);
+      Alert.alert("Success", `Delivery status updated to ${newStatus}`);
+    } catch (error) {
+      Alert.alert("Error", "Failed to update delivery status");
+    }
+  };
+
   const renderDelivery = ({ item }) => (
-    <View style={{ borderWidth: 1, padding: 12, borderRadius: 8, marginBottom: 12 }}>
-      <Text style={{ fontWeight: "bold", fontSize: 16 }}>Delivery #{item.id}</Text>
-      <Text>Order: {item.orderId}</Text>
-      <Text>Customer: {item.customer}</Text>
-      <Text>Address: {item.address}</Text>
-      <Text>Driver: {item.driver}</Text>
-      <View style={{ backgroundColor: item.status === "Scheduled" ? "#FAD7A0" : item.status === "In Transit" ? "#F9E79F" : item.status === "Delivered" ? "#ABEBC6" : "#F5B7B1", alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 6 }}>
+    <View style={{ borderWidth: 1, borderColor: "#E0E0E0", padding: 12, borderRadius: 8, marginBottom: 12, backgroundColor: "#fff" }}>
+      <Text style={{ fontWeight: "bold", fontSize: 16, color: "#333" }}>Delivery #{item.id}</Text>
+      <Text style={{ color: "#666", marginTop: 2 }}>Order: {item.orderId || "N/A"}</Text>
+      <Text style={{ color: "#666" }}>Customer: {item.customer || "Unknown"}</Text>
+      <Text style={{ color: "#666" }}>Address: {item.address || "No address"}</Text>
+      <Text style={{ color: "#666" }}>Driver: {item.driver || "Not assigned"}</Text>
+      
+      <View style={{ backgroundColor: item.status === "Scheduled" ? "#FAD7A0" : item.status === "In Transit" ? "#F9E79F" : item.status === "Delivered" ? "#ABEBC6" : "#F5B7B1", alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 8 }}>
         <Text style={{ color: item.status === "Scheduled" ? "#7e5005ff" : item.status === "In Transit" ? "#af8400ff" : item.status === "Delivered" ? "#07863cff" : "#a7190aff", fontSize: 12, fontWeight: "bold" }}>{item.status}</Text>
       </View>
+
+      {/* Action Buttons */}
+      {item.status !== "Delivered" && item.status !== "Failed" && (
+        <View style={{ flexDirection: "row", marginTop: 12, gap: 8 }}>
+          {item.status === "Scheduled" && (
+            <TouchableOpacity
+              style={{ backgroundColor: "#FFA500", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, flex: 1 }}
+              onPress={() => updateDeliveryStatus(item.id, "In Transit")}
+            >
+              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600", textAlign: "center" }}>Start Transit</Text>
+            </TouchableOpacity>
+          )}
+          
+          {item.status === "In Transit" && (
+            <TouchableOpacity
+              style={{ backgroundColor: "#28A745", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, flex: 1 }}
+              onPress={() => updateDeliveryStatus(item.id, "Delivered")}
+            >
+              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600", textAlign: "center" }}>Mark Delivered</Text>
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity
+            style={{ backgroundColor: "#DC3545", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, flex: 1 }}
+            onPress={() => updateDeliveryStatus(item.id, "Failed")}
+          >
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600", textAlign: "center" }}>Mark Failed</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {item.createdAt && (
+        <Text style={{ fontSize: 10, color: "#999", marginTop: 8 }}>
+          Created: {new Date(item.createdAt).toLocaleDateString()}
+        </Text>
+      )}
     </View>
   );
 
