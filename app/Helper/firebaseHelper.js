@@ -166,6 +166,23 @@ export const logout = async () => {
     }
 };
 
+// ✅ Re-authenticate user before sensitive operations
+export const reauthenticateUser = async (email, password) => {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error("No user is currently logged in");
+        }
+
+        const credential = EmailAuthProvider.credential(email, password);
+        await reauthenticateWithCredential(user, credential);
+        console.log("User re-authenticated successfully");
+    } catch (error) {
+        console.error("Error re-authenticating user:", error.message);
+        throw error;
+    }
+};
+
 // ✅ Delete Account
 export const deleteAccount = async () => {
     try {
@@ -247,6 +264,33 @@ export const deleteNotification = async (id) => {
         console.error("Error deleting notification:", error.message);
         throw error;
     }
+};
+
+//--------------------------------
+// 🔹 Product Categories
+//--------------------------------
+
+// ✅ Predefined categories for the app
+export const PRODUCT_CATEGORIES = [
+    { id: 'CAT-001', name: 'Mehndi', description: 'Traditional Mehndi ceremony outfits', color: '#E67E22' },
+    { id: 'CAT-002', name: 'Barat', description: 'Wedding ceremony dresses', color: '#8E44AD' },
+    { id: 'CAT-003', name: 'Walima', description: 'Reception party attire', color: '#3498DB' },
+    { id: 'CAT-004', name: 'Festival', description: 'Festival and celebration wear', color: '#E74C3C' }
+];
+
+// ✅ Get all categories
+export const getProductCategories = () => {
+    return PRODUCT_CATEGORIES;
+};
+
+// ✅ Get category by ID
+export const getCategoryById = (categoryId) => {
+    return PRODUCT_CATEGORIES.find(cat => cat.id === categoryId) || null;
+};
+
+// ✅ Get category by name
+export const getCategoryByName = (categoryName) => {
+    return PRODUCT_CATEGORIES.find(cat => cat.name.toLowerCase() === categoryName.toLowerCase()) || null;
 };
 
 //--------------------------------
@@ -458,52 +502,39 @@ export const sendSupportEmail = async (supportData) => {
     }
 };
 
-// ✅ Send Seller Complaint to Admin
-export const sendSellerComplaint = async (complaintData) => {
-    try {
-        const docRef = await addDoc(collection(db, "seller_complaints"), {
-            ...complaintData,
-            timestamp: Date.now(),
-            status: "pending", // pending, in_progress, resolved
-            priority: complaintData.priority || "medium", // low, medium, high
-            createdAt: new Date().toISOString(),
-            adminResponse: null,
-            respondedAt: null,
-        });
-        console.log("Seller complaint sent to admin with ID:", docRef.id);
-        return docRef.id;
-    } catch (error) {
-        console.error("Error sending seller complaint:", error);
-        throw error;
-    }
-};
 
-// ✅ Get Seller's Complaint History
-export const getSellerComplaints = async (sellerId) => {
-    try {
-        const q = query(
-            collection(db, "seller_complaints"), 
-            where("sellerId", "==", sellerId),
-            where("timestamp", ">=", 0) // Add ordering
-        );
-        const snap = await getDocs(q);
-        const complaints = [];
-        snap.forEach(d => complaints.push({ id: d.id, ...d.data() }));
-        return complaints.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    } catch (error) {
-        console.error("Error getting seller complaints:", error);
-        throw error;
-    }
-};
-
-// ✅ Get seller reviews
+// ✅ Get seller reviews with product information
 export const getSellerReviews = async (sellerId) => {
     try {
         const q = query(collection(db, "reviews"), where("sellerId", "==", sellerId));
         const snap = await getDocs(q);
         const reviews = [];
-        snap.forEach(d => reviews.push({ id: d.id, ...d.data() }));
-        return reviews;
+        
+        // Fetch reviews with product details
+        for (const docSnap of snap.docs) {
+            const reviewData = { id: docSnap.id, ...docSnap.data() };
+            
+            // If review has productId, fetch product details
+            if (reviewData.productId) {
+                try {
+                    const productDoc = await getDoc(doc(db, "products", reviewData.productId));
+                    if (productDoc.exists()) {
+                        const productData = productDoc.data();
+                        reviewData.productName = productData.name;
+                        reviewData.productImage = productData.imageUrl;
+                        reviewData.productCategory = productData.category;
+                        reviewData.productPrice = productData.price;
+                    }
+                } catch (productError) {
+                    console.error("Error fetching product for review:", productError);
+                    // Continue without product info if fetch fails
+                }
+            }
+            
+            reviews.push(reviewData);
+        }
+        
+        return reviews.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
         console.error("Error getting seller reviews:", error);
         throw error;
@@ -615,156 +646,393 @@ export const getTermsOfService = async () => {
     }
 };
 
+
 //--------------------------------
-// 🔹 Complaint Management (Seller)
+// 🔹 Order Tracking System
 //--------------------------------
 
-// ✅ Get all complaints for a seller
-export const listComplaintsBySeller = async (sellerId) => {
+// ✅ Create order with tracking
+export const createOrderWithTracking = async (orderData) => {
     try {
-        const q = query(collection(db, "complaints"), where("sellerId", "==", sellerId));
-        const snap = await getDocs(q);
-        const items = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-        return items;
-    } catch (e) {
-        console.error("Error listing complaints:", e);
-        throw e;
-    }
-};
-
-// ✅ Create a new complaint (usually from customer, but seller can create too)
-export const createComplaint = async (sellerId, complaint) => {
-    try {
-        const payload = {
-            ...complaint,
-            sellerId,
-            status: complaint?.status || "Open",
-            priority: complaint?.priority || "Medium",
+        const orderId = `ORD-${Date.now()}`;
+        const trackingData = {
+            orderId,
+            status: "Order Placed",
+            timeline: [
+                {
+                    status: "Order Placed",
+                    timestamp: Date.now(),
+                    description: "Order has been placed successfully",
+                    location: "Online",
+                    isCompleted: true
+                },
+                {
+                    status: "Order Confirmed",
+                    timestamp: null,
+                    description: "Seller has confirmed your order",
+                    location: "Seller Location",
+                    isCompleted: false
+                },
+                {
+                    status: "Preparing",
+                    timestamp: null,
+                    description: "Order is being prepared for pickup/delivery",
+                    location: "Seller Location",
+                    isCompleted: false
+                },
+                {
+                    status: "Ready for Pickup/Delivery",
+                    timestamp: null,
+                    description: "Order is ready for pickup or delivery",
+                    location: "Seller Location",
+                    isCompleted: false
+                },
+                {
+                    status: "Out for Delivery",
+                    timestamp: null,
+                    description: "Order is out for delivery",
+                    location: "In Transit",
+                    isCompleted: false
+                },
+                {
+                    status: "Delivered",
+                    timestamp: null,
+                    description: "Order has been delivered successfully",
+                    location: "Customer Location",
+                    isCompleted: false
+                }
+            ],
+            estimatedDelivery: Date.now() + (3 * 24 * 60 * 60 * 1000), // 3 days from now
+            deliveryType: orderData.deliveryType || "Standard",
+            trackingNumber: `TRK-${Date.now()}`,
             createdAt: Date.now(),
-            updatedAt: Date.now(),
+            updatedAt: Date.now()
         };
-        const ref = await addDoc(collection(db, "complaints"), payload);
-        return ref.id;
-    } catch (e) {
-        console.error("Error creating complaint:", e);
-        throw e;
-    }
-};
 
-// ✅ Update complaint (status, response, etc.)
-export const updateComplaint = async (id, updates) => {
-    try {
-        const payload = { 
-            ...updates, 
-            updatedAt: Date.now() 
-        };
-        await updateDoc(doc(db, "complaints", id), payload);
-        return true;
-    } catch (e) {
-        console.error("Error updating complaint:", e);
-        throw e;
-    }
-};
-
-// ✅ Delete complaint
-export const deleteComplaint = async (id) => {
-    try {
-        await deleteDoc(doc(db, "complaints", id));
-        return true;
-    } catch (e) {
-        console.error("Error deleting complaint:", e);
-        throw e;
-    }
-};
-
-// ✅ Add response to complaint
-export const addComplaintResponse = async (id, response) => {
-    try {
-        await updateDoc(doc(db, "complaints", id), {
-            response,
-            status: "In Progress",
-            respondedAt: Date.now(),
-            updatedAt: Date.now(),
+        // Create order
+        const orderRef = await addDoc(collection(db, "orders"), {
+            ...orderData,
+            orderId,
+            trackingNumber: trackingData.trackingNumber,
+            status: "Order Placed",
+            createdAt: Date.now()
         });
-        return true;
-    } catch (e) {
-        console.error("Error adding complaint response:", e);
-        throw e;
+
+        // Create tracking record
+        await setDoc(doc(db, "order_tracking", orderId), trackingData);
+
+        return { orderId, trackingNumber: trackingData.trackingNumber, orderDocId: orderRef.id };
+    } catch (error) {
+        console.error("Error creating order with tracking:", error);
+        throw error;
     }
 };
 
-// ✅ Mark complaint as resolved
-export const resolveComplaint = async (id, resolution = "") => {
+// ✅ Update order tracking status
+export const updateOrderTracking = async (orderId, newStatus, location = "", description = "") => {
     try {
-        await updateDoc(doc(db, "complaints", id), {
-            status: "Resolved",
-            resolution,
-            resolvedAt: Date.now(),
-            updatedAt: Date.now(),
-        });
-        return true;
-    } catch (e) {
-        console.error("Error resolving complaint:", e);
-        throw e;
-    }
-};
-
-// ✅ Add sample complaints for testing (remove this in production)
-export const addSampleComplaints = async (sellerId) => {
-    try {
-        console.log("addSampleComplaints called with sellerId:", sellerId);
+        const trackingRef = doc(db, "order_tracking", orderId);
+        const trackingDoc = await getDoc(trackingRef);
         
-        if (!sellerId) {
-            throw new Error("Seller ID is required");
+        if (!trackingDoc.exists()) {
+            throw new Error("Tracking record not found");
+        }
+
+        const trackingData = trackingDoc.data();
+        const timeline = [...trackingData.timeline];
+        
+        // Find and update the current status
+        const currentIndex = timeline.findIndex(item => item.status === newStatus);
+        if (currentIndex !== -1) {
+            timeline[currentIndex] = {
+                ...timeline[currentIndex],
+                timestamp: Date.now(),
+                description: description || timeline[currentIndex].description,
+                location: location || timeline[currentIndex].location,
+                isCompleted: true
+            };
+
+            // Mark previous statuses as completed
+            for (let i = 0; i < currentIndex; i++) {
+                timeline[i].isCompleted = true;
+                if (!timeline[i].timestamp) {
+                    timeline[i].timestamp = Date.now() - (currentIndex - i) * 60000; // Stagger timestamps
+                }
+            }
+        }
+
+        await updateDoc(trackingRef, {
+            status: newStatus,
+            timeline,
+            updatedAt: Date.now()
+        });
+
+        // Also update the main order status
+        const orderQuery = query(collection(db, "orders"), where("orderId", "==", orderId));
+        const orderSnapshot = await getDocs(orderQuery);
+        
+        if (!orderSnapshot.empty) {
+            const orderDoc = orderSnapshot.docs[0];
+            await updateDoc(doc(db, "orders", orderDoc.id), {
+                status: newStatus,
+                updatedAt: Date.now()
+            });
+        }
+
+        console.log(`Order ${orderId} tracking updated to: ${newStatus}`);
+        return true;
+    } catch (error) {
+        console.error("Error updating order tracking:", error);
+        throw error;
+    }
+};
+
+// ✅ Get order tracking by order ID
+export const getOrderTracking = async (orderId) => {
+    try {
+        const trackingRef = doc(db, "order_tracking", orderId);
+        const trackingDoc = await getDoc(trackingRef);
+        
+        if (trackingDoc.exists()) {
+            return { id: trackingDoc.id, ...trackingDoc.data() };
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting order tracking:", error);
+        throw error;
+    }
+};
+
+// ✅ Get all orders with tracking for seller
+export const getSellerOrdersWithTracking = async (sellerId) => {
+    try {
+        const ordersQuery = query(collection(db, "orders"), where("sellerId", "==", sellerId));
+        const ordersSnapshot = await getDocs(ordersQuery);
+        
+        const ordersWithTracking = [];
+        
+        for (const orderDoc of ordersSnapshot.docs) {
+            const orderData = { id: orderDoc.id, ...orderDoc.data() };
+            
+            // Get tracking data if available
+            if (orderData.orderId) {
+                const trackingData = await getOrderTracking(orderData.orderId);
+                orderData.tracking = trackingData;
+            }
+            
+            ordersWithTracking.push(orderData);
         }
         
-        const sampleComplaints = [
+        return ordersWithTracking.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } catch (error) {
+        console.error("Error getting seller orders with tracking:", error);
+        throw error;
+    }
+};
+
+// ✅ Get customer orders with tracking
+export const getCustomerOrdersWithTracking = async (customerId) => {
+    try {
+        const ordersQuery = query(collection(db, "orders"), where("customerId", "==", customerId));
+        const ordersSnapshot = await getDocs(ordersQuery);
+        
+        const ordersWithTracking = [];
+        
+        for (const orderDoc of ordersSnapshot.docs) {
+            const orderData = { id: orderDoc.id, ...orderDoc.data() };
+            
+            // Get tracking data if available
+            if (orderData.orderId) {
+                const trackingData = await getOrderTracking(orderData.orderId);
+                orderData.tracking = trackingData;
+            }
+            
+            ordersWithTracking.push(orderData);
+        }
+        
+        return ordersWithTracking.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } catch (error) {
+        console.error("Error getting customer orders with tracking:", error);
+        throw error;
+    }
+};
+
+// ✅ Create sample orders with tracking for testing
+export const createSampleOrdersWithTracking = async (sellerId) => {
+    try {
+        const sampleOrders = [
             {
-                orderId: "ORD-1001",
-                customer: "John Doe",
+                sellerId,
+                customerId: "CUST-001",
+                customerName: "John Doe",
                 customerEmail: "john@example.com",
-                type: "Product Quality",
-                priority: "High",
-                description: "Received item with a tear on the sleeve. Very disappointed with the quality.",
-                status: "Open"
+                customerPhone: "+1234567890",
+                items: [
+                    {
+                        productId: "prod123",
+                        productName: "Red Evening Dress",
+                        size: "M",
+                        quantity: 1,
+                        price: 120,
+                        rentalDays: 3
+                    }
+                ],
+                totalAmount: 120,
+                deliveryAddress: "123 Main St, City, State 12345",
+                deliveryType: "Standard",
+                paymentMethod: "COD",
+                paymentStatus: "Pending",
+                rentalStartDate: Date.now() + (2 * 24 * 60 * 60 * 1000), // 2 days from now
+                rentalEndDate: Date.now() + (5 * 24 * 60 * 60 * 1000), // 5 days from now
             },
             {
-                orderId: "ORD-1002", 
-                customer: "Sarah Wilson",
+                sellerId,
+                customerId: "CUST-002",
+                customerName: "Sarah Smith",
                 customerEmail: "sarah@example.com",
-                type: "Late Delivery",
-                priority: "Medium",
-                description: "Order was supposed to be delivered on August 23rd but arrived 3 days late.",
-                status: "In Progress",
-                response: "We apologize for the delay. We've contacted the delivery service and are investigating."
+                customerPhone: "+1234567891",
+                items: [
+                    {
+                        productId: "prod124",
+                        productName: "Blue Wedding Gown",
+                        size: "L",
+                        quantity: 1,
+                        price: 250,
+                        rentalDays: 2
+                    }
+                ],
+                totalAmount: 250,
+                deliveryAddress: "456 Oak Ave, City, State 12345",
+                deliveryType: "Express",
+                paymentMethod: "Online",
+                paymentStatus: "Paid",
+                rentalStartDate: Date.now() + (1 * 24 * 60 * 60 * 1000), // 1 day from now
+                rentalEndDate: Date.now() + (3 * 24 * 60 * 60 * 1000), // 3 days from now
             },
             {
-                orderId: "ORD-1003",
-                customer: "Mike Brown", 
-                customerEmail: "mike@example.com",
-                type: "Wrong Size",
-                priority: "Low",
-                description: "Ordered size M but received size L. Need to exchange.",
-                status: "Resolved",
-                response: "Exchange processed successfully. New item shipped.",
-                resolution: "Customer satisfied with exchange process."
+                sellerId,
+                customerId: "CUST-003",
+                customerName: "Emma Wilson",
+                customerEmail: "emma@example.com",
+                customerPhone: "+1234567892",
+                items: [
+                    {
+                        productId: "prod125",
+                        productName: "Black Cocktail Dress",
+                        size: "S",
+                        quantity: 1,
+                        price: 85,
+                        rentalDays: 1
+                    }
+                ],
+                totalAmount: 85,
+                deliveryAddress: "789 Pine St, City, State 12345",
+                deliveryType: "Standard",
+                paymentMethod: "COD",
+                paymentStatus: "Pending",
+                rentalStartDate: Date.now() + (3 * 24 * 60 * 60 * 1000), // 3 days from now
+                rentalEndDate: Date.now() + (4 * 24 * 60 * 60 * 1000), // 4 days from now
             }
         ];
 
-        console.log("Creating", sampleComplaints.length, "sample complaints...");
+        const createdOrders = [];
         
-        for (let i = 0; i < sampleComplaints.length; i++) {
-            const complaint = sampleComplaints[i];
-            console.log(`Creating complaint ${i + 1}:`, complaint);
-            const complaintId = await createComplaint(sellerId, complaint);
-            console.log(`Complaint ${i + 1} created with ID:`, complaintId);
+        for (const orderData of sampleOrders) {
+            const result = await createOrderWithTracking(orderData);
+            createdOrders.push(result);
         }
+
+        // Update some orders to different statuses for demo
+        if (createdOrders.length > 0) {
+            // Update first order to "Order Confirmed"
+            await updateOrderTracking(createdOrders[0].orderId, "Order Confirmed", "Seller Location", "Your order has been confirmed by the seller");
+            
+            // Update second order to "Preparing"
+            if (createdOrders.length > 1) {
+                await updateOrderTracking(createdOrders[1].orderId, "Order Confirmed", "Seller Location", "Order confirmed by seller");
+                await updateOrderTracking(createdOrders[1].orderId, "Preparing", "Seller Location", "Order is being prepared for delivery");
+            }
+        }
+
+        console.log(`Created ${createdOrders.length} sample orders with tracking for seller: ${sellerId}`);
+        return createdOrders;
+    } catch (error) {
+        console.error("Error creating sample orders:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Seller Approval System
+//--------------------------------
+
+// ✅ Get seller approval status
+export const getSellerApprovalStatus = async (sellerId) => {
+    try {
+        const docRef = doc(db, "seller_approvals", sellerId);
+        const docSnap = await getDoc(docRef);
         
-        console.log("All sample complaints added successfully!");
+        if (docSnap.exists()) {
+            return docSnap.data();
+        } else {
+            // If no approval record exists, create one with pending status
+            const defaultStatus = {
+                sellerId,
+                status: "pending", // pending, approved, rejected
+                submittedAt: Date.now(),
+                reviewedAt: null,
+                reviewedBy: null,
+                comments: null
+            };
+            await setDoc(docRef, defaultStatus);
+            return defaultStatus;
+        }
+    } catch (error) {
+        console.error("Error getting seller approval status:", error);
+        throw error;
+    }
+};
+
+// ✅ Update seller approval status (for admin use)
+export const updateSellerApprovalStatus = async (sellerId, status, comments = null, adminId = null) => {
+    try {
+        const docRef = doc(db, "seller_approvals", sellerId);
+        const updateData = {
+            status, // "approved" or "rejected"
+            reviewedAt: Date.now(),
+            reviewedBy: adminId,
+            comments
+        };
+        
+        await updateDoc(docRef, updateData);
+        console.log(`Seller ${sellerId} status updated to: ${status}`);
         return true;
     } catch (error) {
-        console.error("Error adding sample complaints:", error);
+        console.error("Error updating seller approval status:", error);
+        throw error;
+    }
+};
+
+// ✅ Submit seller for approval (when they complete profile)
+export const submitSellerForApproval = async (sellerId, sellerData) => {
+    try {
+        const approvalData = {
+            sellerId,
+            status: "pending",
+            sellerName: sellerData.name,
+            shopName: sellerData.shopName,
+            email: sellerData.email,
+            submittedAt: Date.now(),
+            reviewedAt: null,
+            reviewedBy: null,
+            comments: null
+        };
+        
+        await setDoc(doc(db, "seller_approvals", sellerId), approvalData);
+        console.log("Seller submitted for approval:", sellerId);
+        return true;
+    } catch (error) {
+        console.error("Error submitting seller for approval:", error);
         throw error;
     }
 };
@@ -795,12 +1063,116 @@ export const uploadImageToCloudinary = async (imageUri) => {
         );
 
         const result = await res.json();
-
-        alert(result.secure_url)
-
+        
+        if (!res.ok) {
+            console.error('Cloudinary upload error:', result);
+            throw new Error(result.error?.message || 'Upload failed');
+        }
+        
+        console.log('Cloudinary upload success:', result.secure_url);
         return result.secure_url; // 🔥 Cloudinary hosted URL
     } catch (err) {
         console.error("Cloudinary upload failed", err);
         throw err;
+    }
+};
+
+// ✅ Create dummy notifications for testing
+export const createDummyNotifications = async (sellerId) => {
+    try {
+        const dummyNotifications = [
+            {
+                sellerId: sellerId,
+                type: 'order',
+                message: 'New order received for Red Evening Dress',
+                details: 'Customer John Doe has placed an order for your Red Evening Dress. Order value: $120. Rental period: 3 days.',
+                orderId: 'ORD-001',
+                productId: 'prod123',
+                productName: 'Red Evening Dress',
+                customerName: 'John Doe',
+                read: false,
+                timestamp: Date.now(),
+                createdAt: new Date().toISOString()
+            },
+            {
+                sellerId: sellerId,
+                type: 'payment',
+                message: 'Payment confirmed for order #ORD-002',
+                details: 'Payment of $85 has been confirmed for Blue Wedding Gown rental. COD payment received successfully.',
+                orderId: 'ORD-002',
+                productId: 'prod124',
+                productName: 'Blue Wedding Gown',
+                customerName: 'Sarah Smith',
+                read: false,
+                timestamp: Date.now() - 3600000, // 1 hour ago
+                createdAt: new Date(Date.now() - 3600000).toISOString()
+            },
+            {
+                sellerId: sellerId,
+                type: 'review',
+                message: 'New 5-star review received',
+                details: 'Customer Emma Wilson left a 5-star review: "Amazing dress! Perfect fit and beautiful design. Highly recommended!"',
+                orderId: 'ORD-003',
+                productId: 'prod125',
+                productName: 'Black Cocktail Dress',
+                customerName: 'Emma Wilson',
+                rating: 5,
+                reviewText: 'Amazing dress! Perfect fit and beautiful design. Highly recommended!',
+                read: true,
+                timestamp: Date.now() - 7200000, // 2 hours ago
+                createdAt: new Date(Date.now() - 7200000).toISOString()
+            },
+            {
+                sellerId: sellerId,
+                type: 'customer',
+                message: 'Customer inquiry about availability',
+                details: 'Customer Mike Johnson is asking about availability of Green Party Dress for next weekend.',
+                productId: 'prod126',
+                productName: 'Green Party Dress',
+                customerName: 'Mike Johnson',
+                read: false,
+                timestamp: Date.now() - 10800000, // 3 hours ago
+                createdAt: new Date(Date.now() - 10800000).toISOString()
+            },
+            {
+                sellerId: sellerId,
+                type: 'order',
+                message: 'Order return reminder',
+                details: 'Reminder: Order #ORD-004 for Pink Formal Dress is due for return tomorrow. Please coordinate with customer.',
+                orderId: 'ORD-004',
+                productId: 'prod127',
+                productName: 'Pink Formal Dress',
+                customerName: 'Lisa Brown',
+                read: false,
+                timestamp: Date.now() - 14400000, // 4 hours ago
+                createdAt: new Date(Date.now() - 14400000).toISOString()
+            },
+            {
+                sellerId: sellerId,
+                type: 'payment',
+                message: 'Payment pending for order #ORD-005',
+                details: 'COD payment of $95 is pending for White Bridal Gown. Customer will pay upon delivery.',
+                orderId: 'ORD-005',
+                productId: 'prod128',
+                productName: 'White Bridal Gown',
+                customerName: 'Anna Davis',
+                read: true,
+                timestamp: Date.now() - 18000000, // 5 hours ago
+                createdAt: new Date(Date.now() - 18000000).toISOString()
+            }
+        ];
+
+        // Add each notification to Firebase
+        const promises = dummyNotifications.map(notification => 
+            addDoc(collection(db, "notifications"), notification)
+        );
+        
+        await Promise.all(promises);
+        console.log(`${dummyNotifications.length} dummy notifications created for seller: ${sellerId}`);
+        return dummyNotifications.length;
+        
+    } catch (error) {
+        console.error("Error creating dummy notifications:", error);
+        throw error;
     }
 };

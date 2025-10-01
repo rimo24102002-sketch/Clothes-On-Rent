@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Modal, Alert } from "react-native";
+import { SafeAreaView, View, Text, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Modal, Alert, Image } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { getSellerReviews, addReviewResponse } from "../Helper/firebaseHelper";
+import Header from "../Components/Header";
 
 export default function SellerReviews({ navigation }) {
   const user = useSelector((state) => state.home.user);
@@ -56,6 +57,31 @@ export default function SellerReviews({ navigation }) {
 
   const renderReview = ({ item }) => (
     <View style={{ borderWidth: 1, borderColor: "#E0E0E0", borderRadius: 12, padding: 16, marginBottom: 12, backgroundColor: "#fff" }}>
+      {/* Product Information */}
+      {(item.productName || item.productImage) && (
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, padding: 12, backgroundColor: "#F8F9FA", borderRadius: 8 }}>
+          {item.productImage && (
+            <View style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: "#E0E0E0", marginRight: 12, overflow: "hidden" }}>
+              <Image 
+                source={{ uri: item.productImage }} 
+                style={{ width: "100%", height: "100%" }} 
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#8E6652", marginBottom: 2 }}>
+              Product: {item.productName || "Unknown Product"}
+            </Text>
+            {item.productCategory && (
+              <Text style={{ fontSize: 12, color: "#666" }}>
+                Category: {item.productCategory}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
+
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <Text style={{ fontWeight: "bold", fontSize: 16, color: "#333" }}>{item.customer || "Anonymous"}</Text>
         <Text style={{ fontSize: 12, color: "#666" }}>
@@ -110,10 +136,9 @@ export default function SellerReviews({ navigation }) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
-      {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 16, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#E0E0E0" }}>
-        <Text style={{ fontSize: 21, fontWeight: "600", color: "#8E6652", marginLeft: 12 }}>Customer Reviews</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#8E6652', marginLeft: 12 }}>Customer Reviews</Text>
       </View>
 
       <View style={{ flex: 1, padding: 16 }}>
@@ -135,8 +160,16 @@ export default function SellerReviews({ navigation }) {
 
       {/* Response Modal */}
       <Modal visible={showResponseModal} transparent={true} animationType="slide">
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <View style={{ backgroundColor: "#fff", padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+        <TouchableOpacity 
+          style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}
+          activeOpacity={1}
+          onPress={() => setShowResponseModal(false)}
+        >
+          <TouchableOpacity 
+            style={{ backgroundColor: "#fff", padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <Text style={{ fontSize: 18, fontWeight: "700", color: "#333" }}>Add Response</Text>
               <TouchableOpacity onPress={() => setShowResponseModal(false)}>
@@ -145,9 +178,50 @@ export default function SellerReviews({ navigation }) {
             </View>
 
             {selectedReview && (
-              <View style={{ marginBottom: 16, padding: 12, backgroundColor: "#F8F9FA", borderRadius: 8 }}>
-                <Text style={{ fontWeight: "600", color: "#333" }}>{selectedReview.customer}'s Review:</Text>
-                <Text style={{ color: "#666", fontSize: 14, marginTop: 4 }}>{selectedReview.review}</Text>
+              <View style={{ marginBottom: 16 }}>
+                {/* Product Info in Modal */}
+                {(selectedReview.productName || selectedReview.productImage) && (
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, padding: 12, backgroundColor: "#F0F7FF", borderRadius: 8 }}>
+                    {selectedReview.productImage && (
+                      <View style={{ width: 40, height: 40, borderRadius: 6, backgroundColor: "#E0E0E0", marginRight: 10, overflow: "hidden" }}>
+                        <Image 
+                          source={{ uri: selectedReview.productImage }} 
+                          style={{ width: "100%", height: "100%" }} 
+                          resizeMode="cover"
+                        />
+                      </View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#3498DB" }}>
+                        {selectedReview.productName || "Unknown Product"}
+                      </Text>
+                      {selectedReview.productCategory && (
+                        <Text style={{ fontSize: 11, color: "#666" }}>
+                          {selectedReview.productCategory}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+                
+                <View style={{ padding: 12, backgroundColor: "#F8F9FA", borderRadius: 8 }}>
+                  <Text style={{ fontWeight: "600", color: "#333" }}>{selectedReview.customer}'s Review:</Text>
+                  <Text style={{ color: "#666", fontSize: 14, marginTop: 4 }}>{selectedReview.review}</Text>
+                  
+                  {/* Rating in Modal */}
+                  <View style={{ flexDirection: "row", marginTop: 8, alignItems: "center" }}>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Feather
+                        key={index}
+                        name="star"
+                        size={14}
+                        color={index < (selectedReview.rating || 0) ? "#FFA500" : "#E0E0E0"}
+                        style={{ marginRight: 2 }}
+                      />
+                    ))}
+                    <Text style={{ marginLeft: 6, color: "#666", fontSize: 12 }}>({selectedReview.rating || 0}/5)</Text>
+                  </View>
+                </View>
               </View>
             )}
 
@@ -183,9 +257,9 @@ export default function SellerReviews({ navigation }) {
                 <Text style={{ textAlign: "center", color: "#fff", fontWeight: "600" }}>Send Response</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

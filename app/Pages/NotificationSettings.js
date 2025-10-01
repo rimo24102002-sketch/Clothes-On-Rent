@@ -3,6 +3,7 @@ import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, Activity
 import { Feather } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { getSellerNotificationSettings, updateSellerNotificationSettings } from "../Helper/firebaseHelper";
+import Header from '../Components/Header';
 
 export default function NotificationSettings({ navigation }) {
   const user = useSelector((state) => state.home.user);
@@ -57,28 +58,8 @@ export default function NotificationSettings({ navigation }) {
   // Custom Switch Component with CSS-like styling
   const CustomSwitch = ({ value, onValueChange, disabled }) => {
     const switchStyles = {
-      container: {
-        width: 50,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: '#F1DCD1',
-        padding: 2,
-        justifyContent: 'center',
-        opacity: disabled ? 0.5 : 1,
-      },
-      thumb: {
-        width: 26,
-        height: 26,
-        borderRadius: 13,
-        backgroundColor: value ? '#8E6652' : '#E0E0E0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        elevation: 3,
-        transform: [{ translateX: value ? 18 : 0 }],
-      },
-    };
+      container: {width: 50,height: 30,borderRadius: 15,backgroundColor: '#F1DCD1',padding: 2,justifyContent: 'center',opacity: disabled ? 0.5 : 1,},
+      thumb: {width: 26,height: 26,borderRadius: 13,backgroundColor: value ? '#8E6652' : '#E0E0E0',shadowColor: '#000',shadowOffset: { width: 0, height: 2 },shadowOpacity: 0.2,shadowRadius: 2,elevation: 3,transform: [{ translateX: value ? 18 : 0 }],},};
 
     return (
       <TouchableOpacity
@@ -114,7 +95,7 @@ export default function NotificationSettings({ navigation }) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E0E0E0' }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#8E6652', marginLeft: 12 }}>Notification Settings</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#8E6652', marginLeft: 12 }}>Notification Settings</Text>
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#8E6652" />
@@ -126,9 +107,8 @@ export default function NotificationSettings({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E0E0E0' }}>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#8E6652', marginLeft: 12 }}>Notification Settings</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#8E6652', marginLeft: 12 }}>Notification Settings</Text>
       </View>
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20 }}>
@@ -196,3 +176,4 @@ export default function NotificationSettings({ navigation }) {
     </SafeAreaView>
   );
 }
+  

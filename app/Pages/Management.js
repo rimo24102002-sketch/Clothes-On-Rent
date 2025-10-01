@@ -8,40 +8,18 @@ import {
 } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
+import Header from "../Components/Header";
 
 export default function Management({ navigation }) {
   const user = useSelector((state) => state.home.user);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F1DCD1" }}>
+     <Header 
+        title="Management Center"
+        onBackPress={() => navigation.goBack()}
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Header */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 24,
-            paddingVertical: 20,
-            backgroundColor: "#8E6652",
-          }}
-        >
-          <TouchableOpacity
-            style={{ padding: 8 }}
-            onPress={() => navigation.goBack()}
-          >
-            <Feather name="chevron-left" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "700",
-              color: "#fff",
-              marginLeft: 10,
-            }}
-          >
-            Management Center
-          </Text>
-        </View>
 
         {/* Management Options */}
         <View style={{ paddingHorizontal: 24, marginTop: 24, gap: 16 }}>
@@ -98,15 +76,16 @@ export default function Management({ navigation }) {
             <Feather name="chevron-right" size={20} color="#8E6652" />
           </TouchableOpacity>
 
-          {/* Complaints */}
+          {/* Order Tracking */}
           <TouchableOpacity
             style={styles.actionBtn}
-            onPress={() => navigation.navigate("ComplaintMg")}
+            onPress={() => navigation.navigate("OrderTracking")}
           >
-            <Ionicons name="alert-circle-outline" size={22} color="#8E6652" />
-            <Text style={styles.actionText}>Complain Management</Text>
+            <Ionicons name="location-outline" size={22} color="#8E6652" />
+            <Text style={styles.actionText}>Order Tracking</Text>
             <Feather name="chevron-right" size={20} color="#8E6652" />
           </TouchableOpacity>
+
         </View>
       </ScrollView>
     </SafeAreaView>

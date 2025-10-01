@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView, Alert } from 'react-native';
+import { SafeAreaView, View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView, Alert } from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import { createPickup, listPickupsBySeller, updatePickup } from '../Helper/firebaseHelper';
+import Header from '../Components/Header';
 
 export default function PickupManagement() {
   const user = useSelector((s) => s.home.user);
@@ -73,11 +74,13 @@ export default function PickupManagement() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
-        <Text style={{ flex: 1, fontSize: 20, fontWeight: '700', color: '#8E6652' }}>Pickup Management</Text>
-        <TouchableOpacity style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8E6652', alignItems: 'center', justifyContent: 'center' }} onPress={() => setAddVisible(true)}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', marginLeft: 12, color:'#8E6652' }}>Pickup Management</Text>
+        <TouchableOpacity 
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8E6652', alignItems: 'center', justifyContent: 'center' }} 
+          onPress={() => setAddVisible(true)}
+        >
           <Ionicons name="add" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -137,8 +140,16 @@ export default function PickupManagement() {
         </View>
       </Modal>
       <Modal visible={assignVisible} transparent onRequestClose={() => setAssignVisible(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18 }}>
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setAssignVisible(false)}
+        >
+          <TouchableOpacity 
+            style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18 }}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 10 }}>Assign Rider</Text>
             {riders.map(r => (
               <TouchableOpacity key={r.id} style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, marginBottom: 8 }} onPress={async () => {
@@ -169,9 +180,9 @@ export default function PickupManagement() {
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Assign</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

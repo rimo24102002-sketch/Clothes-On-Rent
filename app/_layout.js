@@ -26,11 +26,12 @@ import AccountSetting from './Pages/AccountSetting';
 import Logout from './Pages/Logout';
 import OrderPayment from './Pages/OrderPayment';
 import Delivery from './Pages/Delivery';
-import ComplaintMg from './Pages/ComplaintMg';
 import BottomTabSeller from './Pages/BottomTabSeller';
 import Notification from './Pages/Notification';
 import Management from './Pages/Management';
 import NotificationSettings from './Pages/NotificationSettings';
+import AddProduct from './Pages/AddProduct';
+import OrderTracking from './Pages/OrderTracking';
 
 // Screens (Customer)
 import Profiles from './Pages/Profiles';
@@ -50,6 +51,7 @@ import Homestack from './Pages/Homestack';
 import Mhndi from './Pages/Mhndi';
 import Payment from "./Pages/Payment";
 import Order from "./Pages/Order";
+import CustomerOrders from "./Pages/CustomerOrders";
 import Index from "./Pages/Index";
 import BottomTab from './Pages/BottomTab';
 
@@ -84,17 +86,25 @@ const SellerStack = () => (
     <Stack.Screen name="Logout" component={Logout}  />
     <Stack.Screen name="OrderPayment" component={OrderPayment}  />
     <Stack.Screen name="Delivery" component={Delivery}  />
-    <Stack.Screen name="ComplaintMg" component={ComplaintMg} />
     <Stack.Screen name="Notification" component={Notification} />
     <Stack.Screen name="Management" component={Management}/>
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
+    <Stack.Screen name="OrderTracking" component={OrderTracking} options={{ headerShown: false }}/>
   </Stack.Navigator>
 );
 
 const CustomerStack = () => (
-  <Stack.Navigator initialRouteName="Complain">
-    <Stack.Screen name="Profiles" component={Profiles} />
-    <Stack.Screen name="EProfile" component={EProfile} />
+  <Stack.Navigator 
+    initialRouteName="BottomTab"
+    screenOptions={{
+      headerStyle: { backgroundColor: '#8E6652' },
+      headerTintColor: '#fff',
+      headerTitleStyle: { fontWeight: 'bold' },
+      headerBackTitleVisible: false,
+    }}
+  >
+    <Stack.Screen name="Profiles" component={Profiles} options={{ headerShown: false }} />
+    <Stack.Screen name="EProfile" component={EProfile} options={{ headerShown: false }} />
     <Stack.Screen name="CReview" component={CReview} />
     <Stack.Screen name="OrderDetail" component={OrderDetail} />
     <Stack.Screen name="CPending" component={CPending} />
@@ -110,8 +120,12 @@ const CustomerStack = () => (
     <Stack.Screen name="Mhndi" component={Mhndi} />
     <Stack.Screen name="Payment" component={Payment} />
     <Stack.Screen name="Order" component={Order} />
+    <Stack.Screen name="CustomerOrders" component={CustomerOrders} options={{ headerShown: false }} />
     <Stack.Screen name="Index" component={Index} />
-    <Stack.Screen name="BottomTab" component={BottomTab} />
+    <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
+    <Stack.Screen name="Password" component={Password} />
+    <Stack.Screen name="Delete" component={Delete} />
+    <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
 
   </Stack.Navigator>
 );
@@ -120,7 +134,10 @@ const RenderStack = () => {
   const role = useSelector((state) => state.home.role);
   const user = useSelector((state) => state.home.user);
 
-  switch (role) {
+  // Temporarily set role to Customer for development
+  const currentRole = "Customer";
+
+  switch (currentRole) {
     case "Seller":
       return <SellerStack />;
     case "Customer":
@@ -141,9 +158,11 @@ const App = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-          <RenderStack />
-        </SafeAreaView>
+        <NavigationContainer>
+          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+            <RenderStack />
+          </SafeAreaView>
+        </NavigationContainer>
       </PersistGate>
     </Provider>
   );
