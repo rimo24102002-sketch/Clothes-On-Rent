@@ -97,6 +97,8 @@ export const handleSignUp = async (email, password, extraData = {}) => {
             email: user.email,
             createdAt: new Date().toISOString(),
             ...extraData,
+            // Add status field for sellers - default is "pending"
+            status: extraData.role === "Seller" ? "pending" : "active",
         };
 
         await setDoc(doc(db, "users", user.uid), userData);
@@ -110,6 +112,7 @@ export const handleSignUp = async (email, password, extraData = {}) => {
                 email: user.email,
                 address: extraData.address || "",
                 notificationsEnabled: true,
+                status: "pending",
                 createdAt: new Date().toISOString(),
             }, { merge: true });
         }

@@ -25,8 +25,11 @@ const Signup = ({ navigation }) => {
             Alert.alert("Error", "Please enter your email");
             return;
         }
-        if (!email.includes('@')) {
-            Alert.alert("Error", "Please enter a valid email address");
+        
+        // Better email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            Alert.alert("Error", "Please enter a valid email address (e.g., user@example.com)");
             return;
         }
         if (!address.trim()) {
@@ -52,10 +55,16 @@ const Signup = ({ navigation }) => {
 
         setLoading(true);
         try {
+            // Trim all inputs before sending to Firebase
+            const trimmedEmail = email.trim().toLowerCase();
+            const trimmedPassword = password.trim();
+            const trimmedName = name.trim();
+            const trimmedAddress = address.trim();
+            
             const user = await handleSignUp(
-                email,
-                password,
-                { role: "Seller", name, email, address }
+                trimmedEmail,
+                trimmedPassword,
+                { role: "Seller", name: trimmedName, email: trimmedEmail, address: trimmedAddress }
             );
 
             if (user?.uid) {
@@ -63,8 +72,11 @@ const Signup = ({ navigation }) => {
                 dispatch(setRole("Seller"));
                 dispatch(setUser(user));
 
-                // Navigate to Profile screen
-              //  navigation.navigate("Profile", { userId: user.uid });
+                // Don't navigate - RenderStack will automatically switch to SellerStack
+                // which will show BottomTabSeller as its initialRouteName
+                Alert.alert("Success", "Account created successfully!", [
+                    { text: "OK", onPress: () => {} }
+                ]);
             } else {
                 Alert.alert("Error", "Sign up failed. Please try again.");
             }

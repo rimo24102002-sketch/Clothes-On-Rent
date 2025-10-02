@@ -31,6 +31,7 @@ import BottomTabSeller from './Pages/BottomTabSeller';
 import Notification from './Pages/Notification';
 import Management from './Pages/Management';
 import NotificationSettings from './Pages/NotificationSettings';
+import PendingApproval from './Pages/PendingApproval';
 
 // Screens (Customer)
 import Profiles from './Pages/Profiles';
@@ -88,6 +89,7 @@ const SellerStack = () => (
     <Stack.Screen name="Notification" component={Notification} />
     <Stack.Screen name="Management" component={Management}/>
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
+    <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
   </Stack.Navigator>
 );
 
@@ -122,6 +124,16 @@ const RenderStack = () => {
 
   switch (role) {
     case "Seller":
+      // Check if seller is approved
+      if (user?.status === "pending") {
+        // Show PendingApproval screen until admin approves
+        return (
+          <Stack.Navigator initialRouteName="PendingApproval">
+            <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
+          </Stack.Navigator>
+        );
+      }
+      // Show full seller features if approved
       return <SellerStack />;
     case "Customer":
       return <CustomerStack />;
