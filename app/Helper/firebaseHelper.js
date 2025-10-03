@@ -269,14 +269,56 @@ export const listProductsBySeller = async (sellerId) => {
     }
 };
 
+//--------------------------------
+// 🔹 Product Categories
+//--------------------------------
+
+export const PRODUCT_CATEGORIES = [
+    { 
+        id: 'CAT-001', 
+        name: 'Mehndi', 
+        description: 'Traditional Mehndi ceremony outfits',
+        color: '#E67E22' 
+    },
+    { 
+        id: 'CAT-002', 
+        name: 'Barat', 
+        description: 'Wedding ceremony dresses',
+        color: '#8E44AD' 
+    },
+    { 
+        id: 'CAT-003', 
+        name: 'Walima', 
+        description: 'Reception party attire',
+        color: '#3498DB' 
+    },
+    { 
+        id: 'CAT-004', 
+        name: 'Festival', 
+        description: 'Festival and celebration wear',
+        color: '#E74C3C' 
+    }
+];
+
+export const getProductCategories = () => PRODUCT_CATEGORIES;
+
+export const getCategoryById = (id) => PRODUCT_CATEGORIES.find(c => c.id === id);
+
+export const getCategoryByName = (name) => PRODUCT_CATEGORIES.find(c => c.name.toLowerCase() === name.toLowerCase());
+
 export const addProduct = async (sellerId, product) => {
     try {
         const payload = { 
             ...product, 
             sizes: product?.sizes || ["S","M","L"],
+            stock: product?.stock || {},
             securityFee: Number(product?.securityFee || 0),
+            categoryId: product?.categoryId || '',
+            categoryName: product?.categoryName || '',
+            status: 'pending', // All products need admin approval
             sellerId, 
-            createdAt: Date.now() 
+            createdAt: Date.now(),
+            updatedAt: Date.now()
         };
         const ref = await addDoc(collection(db, "products"), payload);
         return ref.id;
@@ -761,7 +803,7 @@ export const addSampleComplaints = async (sellerId) => {
             const complaint = sampleComplaints[i];
             console.log(`Creating complaint ${i + 1}:`, complaint);
             const complaintId = await createComplaint(sellerId, complaint);
-            console.log(`Complaint ${i + 1} created with ID:`, complaintId);
+            console.log('Complaint ${i + 1} created with ID:', complaintId);
         }
         
         console.log("All sample complaints added successfully!");
@@ -772,38 +814,169 @@ export const addSampleComplaints = async (sellerId) => {
     }
 };
 
-//Cloudinary Upload
-export const uploadImageToCloudinary = async (imageUri) => {
-    const CLOUD_NAME = "dquqfgjjv";
-    const UPLOAD_PRESET = "react_native_uploads";
+//--------------------------------
+// 🔹 Seller Status Management
+//--------------------------------
 
-
+// ✅ Get seller status by sellerId from sellers collection
+export const getSellerStatus = async (sellerId) => {
     try {
-       
+        const sellerDoc = await getDoc(doc(db, "sellers", sellerId));
+        if (sellerDoc.exists()) {
+            return sellerDoc.data().status || "pending";
+        }
+        return "pending";
+    } catch (error) {
+        console.error("Error getting seller status:", error);
+        throw error;
+    }
+};
 
-        let data = new FormData();
-        data.append("file", {
-            uri: imageUri,
-            type: "image/jpeg",
-            name: "upload.jpg",
+// ✅ Get seller data by sellerId from sellers collection
+export const getSellerData = async (sellerId) => {
+    try {
+        const sellerDoc = await getDoc(doc(db, "sellers", sellerId));
+        if (sellerDoc.exists()) {
+            return { sellerId, ...sellerDoc.data() };
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting seller data:", error);
+        throw error;
+    }
+};
+
+// ✅ Update seller status (approve/reject/pending)
+export const updateSellerStatus = async (sellerId, status, adminNotes = "") => {
+    try {
+        const sellerRef = doc(db, "sellers", sellerId);
+        const updateData = {
+            status: status, // "approved", "rejected", "pending"
+            statusUpdatedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        if (adminNotes) {
+            updateData.adminNotes = adminNotes;
+        }
+
+        await updateDoc(sellerRef, updateData);
+
+        // Also update the users collection to maintain consistency
+        const sellerData = await getSellerData(sellerId);
+        if (sellerData && sellerData.uid) {
+            const userRef = doc(db, "users", sellerData.uid);
+            await updateDoc(userRef, {
+                status: status,
+                statusUpdatedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+        }
+
+        console.log(`Seller ${sellerId} status updated to: ${status}`);
+        return true;
+    } catch (error) {
+        console.error("Error updating seller status:", error);
+        throw error;
+    }
+};
+
+// ✅ Approve seller account
+export const approveSeller = async (sellerId, adminNotes = "Account approved by admin") => {
+    try {
+        await updateSellerStatus(sellerId, "approved", adminNotes);
+        
+        // Add notification for seller
+        await addNotification(sellerId, "account", "🎉 Your seller account has been approved! You can now access all features.");
+        
+        console.log(`Seller ${sellerId} approved successfully`);
+        return true;
+    } catch (error) {
+        console.error("Error approving seller:", error);
+        throw error;
+    }
+};
+
+// ✅ Reject seller account
+export const rejectSeller = async (sellerId, adminNotes = "Account rejected by admin") => {
+    try {
+        await updateSellerStatus(sellerId, "rejected", adminNotes);
+        
+        // Add notification for seller
+        await addNotification(sellerId, "account", "❌ Your seller account application has been rejected. Please contact support for more information.");
+        
+        console.log(`Seller ${sellerId} rejected`);
+        return true;
+    } catch (error) {
+        console.error("Error rejecting seller:", error);
+        throw error;
+    }
+};
+
+// ✅ Get all sellers with specific status
+export const getSellersByStatus = async (status = "all") => {
+    try {
+        let q;
+        if (status === "all") {
+            q = collection(db, "sellers");
+        } else {
+            q = query(collection(db, "sellers"), where("status", "==", status));
+        }
+        
+        const querySnapshot = await getDocs(q);
+        const sellers = [];
+        querySnapshot.forEach((doc) => {
+            sellers.push({ sellerId: doc.id, ...doc.data() });
         });
-        data.append("upload_preset", UPLOAD_PRESET);
+        
+        // Sort by creation date (newest first)
+        return sellers.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0);
+            const dateB = new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+    } catch (error) {
+        console.error("Error getting sellers by status:", error);
+        throw error;
+    }
+};
 
-        const res = await fetch(
-           `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-            {
-                method: "POST",
-                body: data,
-            }
-        );
+// ✅ Get all approved sellers for display
+export const getApprovedSellers = async () => {
+    try {
+        return await getSellersByStatus("approved");
+    } catch (error) {
+        console.error("Error getting approved sellers:", error);
+        throw error;
+    }
+};
 
-        const result = await res.json();
+// ✅ Get all pending sellers for admin review
+export const getPendingSellers = async () => {
+    try {
+        return await getSellersByStatus("pending");
+    } catch (error) {
+        console.error("Error getting pending sellers:", error);
+        throw error;
+    }
+};
 
-        alert(result.secure_url)
-
-        return result.secure_url; // 🔥 Cloudinary hosted URL
-    } catch (err) {
-        console.error("Cloudinary upload failed", err);
-        throw err;
+// ✅ Get seller statistics
+export const getSellerStats = async () => {
+    try {
+        const allSellers = await getSellersByStatus("all");
+        const approved = allSellers.filter(s => s.status === "approved").length;
+        const pending = allSellers.filter(s => s.status === "pending").length;
+        const rejected = allSellers.filter(s => s.status === "rejected").length;
+        
+        return {
+            total: allSellers.length,
+            approved,
+            pending,
+            rejected
+        };
+    } catch (error) {
+        console.error("Error getting seller stats:", error);
+        throw error;
     }
 };

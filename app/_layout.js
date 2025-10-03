@@ -20,6 +20,7 @@ import PrivacyPolicy from './Pages/PrivacyPolicy';
 import HelpCenter from './Pages/HelpCenter';
 import ForgotPassword from './Pages/ForgotPassword';
 import ViewProduct from './Pages/ViewProduct';
+import AddProduct from './Pages/AddProduct';
 import PickUp from './Pages/PickUp';
 import Email from './Pages/Email';
 import AccountSetting from './Pages/AccountSetting';
@@ -79,6 +80,7 @@ const SellerStack = () => (
     <Stack.Screen name="HelpCenter" component={HelpCenter}  />
     <Stack.Screen name="ForgotPassword" component={ForgotPassword}  />
     <Stack.Screen name="ViewProduct" component={ViewProduct}  />
+    <Stack.Screen name="AddProduct" component={AddProduct} options={{ headerShown: false }} />
     <Stack.Screen name="PickUp" component={PickUp}  />
     <Stack.Screen name="Email" component={Email}  />
     <Stack.Screen name="AccountSetting" component={AccountSetting}  />
@@ -121,6 +123,9 @@ const CustomerStack = () => (
 const RenderStack = () => {
   const role = useSelector((state) => state.home.role);
   const user = useSelector((state) => state.home.user);
+
+  console.log('RenderStack - User status:', user?.status);
+  console.log('RenderStack - User role:', role);
 
   switch (role) {
     case "Seller":

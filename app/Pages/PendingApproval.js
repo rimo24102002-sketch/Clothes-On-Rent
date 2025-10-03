@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { Feather } from '@expo/vector-icons';
@@ -12,23 +12,63 @@ const PendingApproval = ({ navigation }) => {
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
 
-  const checkApprovalStatus = async () => {
+  // Auto-check status on component mount
+  useEffect(() => {
+    checkApprovalStatus(true); // Silent check on mount
+  }, []);
+
+  const checkApprovalStatus = async (silent = false) => {
     setRefreshing(true);
     try {
-      const userData = await getDataById('users', user.uid);
+      console.log('Checking approval status for user:', user.uid);
+      console.log('Checking approval status for sellerId:', user.sellerId);
       
-      if (userData?.status === 'approved') {
-        // Update Redux with new user data
-        dispatch(setUser(userData));
-        Alert.alert('Approved!', 'Your seller account has been approved! You can now access all features.');
-      } else if (userData?.status === 'rejected') {
-        Alert.alert('Application Rejected', 'Your seller application has been rejected. Please contact support for more information.');
+      // Check both users and sellers collections
+      const userData = await getDataById('users', user.uid);
+      console.log('Fetched user data:', userData);
+      console.log('User status:', userData?.status);
+      
+      // Also check sellers collection if sellerId exists
+      let sellerData = null;
+      if (user.sellerId) {
+        sellerData = await getDataById('sellers', user.sellerId);
+        console.log('Fetched seller data:', sellerData);
+        console.log('Seller status:', sellerData?.status);
+      }
+      
+      // Use seller status if available, otherwise use user status
+      const currentStatus = sellerData?.status || userData?.status;
+      console.log('Final status to use:', currentStatus);
+      
+      if (currentStatus === 'approved') {
+        // Update Redux with merged data (prioritize seller data)
+        const updatedUserData = {
+          ...userData,
+          ...sellerData,
+          uid: userData.uid, // Keep original uid
+          status: 'approved'
+        };
+        dispatch(setUser(updatedUserData));
+        console.log('Status approved! Updated Redux store with:', updatedUserData);
+        if (!silent) {
+          Alert.alert('Approved!', 'Your seller account has been approved! You can now access all features.');
+        }
+      } else if (currentStatus === 'rejected') {
+        console.log('Status rejected');
+        if (!silent) {
+          Alert.alert('Application Rejected', 'Your seller application has been rejected. Please contact support for more information.');
+        }
       } else {
-        Alert.alert('Still Pending', 'Your account is still awaiting admin approval. Please check back later.');
+        console.log('Status still pending');
+        if (!silent) {
+          Alert.alert('Still Pending', 'Your account is still awaiting admin approval. Please check back later.');
+        }
       }
     } catch (error) {
       console.error('Error checking approval status:', error);
-      Alert.alert('Error', 'Failed to check approval status. Please try again.');
+      if (!silent) {
+        Alert.alert('Error', 'Failed to check approval status. Please try again.');
+      }
     } finally {
       setRefreshing(false);
     }
