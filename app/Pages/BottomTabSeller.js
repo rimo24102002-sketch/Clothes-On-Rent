@@ -1,13 +1,17 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import Notification from './Notification';
-import Profile from './Profile';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AccountSettings from './AccountSetting';
 import Management from './Management';
+import Notification from './Notification';
+import Profile from './Profile';
 
 const Tab = createBottomTabNavigator();
 
-export default function BottomTabSeller() {
+export default function BottomTabSeller({ navigation }) {
+    console.log('=== BottomTabSeller Debug ===');
+    console.log('BottomTabSeller is rendering for approved seller');
+    console.log('=== End BottomTabSeller Debug ===');
+    
     return (
         <Tab.Navigator screenOptions={{tabBarActiveTintColor:'#8E6652',tabBarInactiveTintColor:'#666',tabBarStyle:{backgroundColor:'#FFFFFF',borderTopWidth:0,elevation:20,shadowColor:'#000',shadowOffset:{width:0,height:-4},shadowOpacity:0.15,shadowRadius:8,height:95,paddingBottom:20,paddingTop:10,borderTopLeftRadius:20,borderTopRightRadius:20},tabBarLabelStyle:{fontSize:12,fontWeight:'600',marginTop:2,textTransform:'uppercase',letterSpacing:0.5},tabBarItemStyle:{paddingVertical:5},headerShown:false}}>
             <Tab.Screen name="Profile" component={Profile} options={{tabBarIcon:({color,focused})=><Ionicons name="person" size={26} color={color} />,tabBarLabel:'PROFILE'}} />

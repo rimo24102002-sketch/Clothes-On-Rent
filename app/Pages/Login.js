@@ -1,13 +1,13 @@
-import { View, Text, ImageBackground, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native'
 import React, { useState } from "react";
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { setUser, setRole } from '../redux/Slices/HomeDataSlice';
 import { login } from "../Helper/firebaseHelper";
+import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
 
 const Login = ({ navigation }) => {
    
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("anum@gmail.com");
+  const [password, setPassword] = useState("Anum@@");
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
 
@@ -31,12 +31,16 @@ const Login = ({ navigation }) => {
       const user = await login(email, password);
 
       if (user?.uid) {
-        // Save role + user to redux
-        dispatch(setRole(user.role || "Seller"));
-        dispatch(setUser(user));
+        // Determine role based on seller status
+        let userRole = user.role || "Seller";
+        if (user.role === "Seller" && user.status === "pending") {
+          userRole = "pending";
+        }
         
-        // Navigate to Profile screen
-        navigation.navigate("Profile", { userId: user.uid });
+        dispatch(setRole(userRole));
+        dispatch(setUser(user));
+        // Navigation will be handled by RenderStack based on role and status
+        // No need to navigate manually as the stack will render appropriately
       } else {
         Alert.alert("Error", "Login failed. Please try again.");
       }

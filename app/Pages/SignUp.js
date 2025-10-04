@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import React, { useState } from 'react';
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { handleSignUp } from '../Helper/firebaseHelper';
 import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
@@ -69,7 +69,7 @@ const Signup = ({ navigation }) => {
 
             if (user?.uid) {
                 // Save role + user to redux
-                dispatch(setRole("Seller"));
+                dispatch(setRole("pending"));
                 dispatch(setUser(user));
 
                 // Don't navigate - RenderStack will automatically switch to SellerStack

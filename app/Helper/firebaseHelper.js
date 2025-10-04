@@ -1,7 +1,7 @@
 // firestoreService.js
-import {createUserWithEmailAndPassword,sendPasswordResetEmail,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider} from "firebase/auth";
-import {addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc, query, where} from 'firebase/firestore';
-import { auth, db } from '../../firebase'; 
+import { createUserWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, updatePassword } from "firebase/auth";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
 
 //--------------------------------
 // 🔹 Firestore Services
@@ -113,6 +113,7 @@ export const handleSignUp = async (email, password, extraData = {}) => {
                 address: extraData.address || "",
                 notificationsEnabled: true,
                 status: "pending",
+                role:"Seller",
                 createdAt: new Date().toISOString(),
             }, { merge: true });
         }
@@ -132,7 +133,39 @@ export const login = async (email, password) => {
         // Get user data from Firestore
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (userDoc.exists()) {
-            return { uid: firebaseUser.uid, ...userDoc.data() };
+            const userData = { uid: firebaseUser.uid, ...userDoc.data() };
+            
+            // If user is a seller, also fetch seller data for up-to-date status
+            if (userData.role === "Seller" && userData.sellerId) {
+                try {
+                    console.log('Fetching seller data for sellerId:', userData.sellerId);
+                    const sellerDoc = await getDoc(doc(db, "sellers", userData.sellerId));
+                    if (sellerDoc.exists()) {
+                        const sellerData = sellerDoc.data();
+                        console.log('Fetched seller data:', sellerData);
+                        
+                        // Merge seller data with user data (prioritize seller data for status)
+                        const mergedData = {
+                            ...userData,
+                            ...sellerData,
+                            uid: userData.uid, // Keep original uid
+                            status: sellerData.status || userData.status // Use seller status if available
+                        };
+                        console.log('=== Login Function Debug ===');
+                        console.log('Original userData:', JSON.stringify(userData, null, 2));
+                        console.log('Seller data:', JSON.stringify(sellerData, null, 2));
+                        console.log('Merged data:', JSON.stringify(mergedData, null, 2));
+                        console.log('Final status:', mergedData.status);
+                        console.log('=== End Login Function Debug ===');
+                        return mergedData;
+                    }
+                } catch (sellerError) {
+                    console.error("Error fetching seller data:", sellerError);
+                    // Return user data even if seller data fetch fails
+                }
+            }
+            
+            return userData;
         } else {
             throw new Error("User data not found in database");
         }

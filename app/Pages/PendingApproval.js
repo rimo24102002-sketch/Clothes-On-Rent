@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
 import { Feather } from '@expo/vector-icons';
-import { getDataById } from '../Helper/firebaseHelper';
-import { setUser } from '../redux/Slices/HomeDataSlice';
-import { logout } from '../Helper/firebaseHelper';
-import { setRole } from '../redux/Slices/HomeDataSlice';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { getDataById, logout } from '../Helper/firebaseHelper';
+import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
 
 const PendingApproval = ({ navigation }) => {
   const user = useSelector((state) => state.home.user);
@@ -15,9 +13,16 @@ const PendingApproval = ({ navigation }) => {
   // Auto-check status on component mount
   useEffect(() => {
     checkApprovalStatus(true); // Silent check on mount
-  }, []);
+  }, [user.uid, user.sellerId]);
+
+
 
   const checkApprovalStatus = async (silent = false) => {
+    console.log('=== Check Approval Status Started ===');
+    console.log('Silent mode:', silent);
+    console.log('User UID:', user.uid);
+    console.log('User sellerId:', user.sellerId);
+    
     setRefreshing(true);
     try {
       console.log('Checking approval status for user:', user.uid);
@@ -39,8 +44,10 @@ const PendingApproval = ({ navigation }) => {
       // Use seller status if available, otherwise use user status
       const currentStatus = sellerData?.status || userData?.status;
       console.log('Final status to use:', currentStatus);
+      console.log('Current status === "approved":', currentStatus === 'approved');
       
       if (currentStatus === 'approved') {
+        console.log('=== STATUS IS APPROVED ===');
         // Update Redux with merged data (prioritize seller data)
         const updatedUserData = {
           ...userData,
@@ -48,10 +55,34 @@ const PendingApproval = ({ navigation }) => {
           uid: userData.uid, // Keep original uid
           status: 'approved'
         };
-        dispatch(setUser(updatedUserData));
-        console.log('Status approved! Updated Redux store with:', updatedUserData);
+        console.log('Status approved! Seller data:', updatedUserData);
+        console.log('Silent mode check:', silent);
+        
         if (!silent) {
-          Alert.alert('Approved!', 'Your seller account has been approved! You can now access all features.');
+          console.log('Showing approval alert...');
+          Alert.alert(
+            'Profile Approved! 🎉',
+            'Congratulations! Your seller profile has been approved by our admin team. Please login again to use the seller features.',
+            [
+              {
+                text: 'OK',
+                onPress: async () => {
+                  try {
+                    console.log('User clicked OK, logging out...');
+                    await logout();
+                    dispatch(setRole(''));
+                    dispatch(setUser({}));
+                    console.log('User logged out successfully');
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                    Alert.alert('Error', 'Failed to logout. Please try again.');
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          console.log('Silent mode - not showing alert');
         }
       } else if (currentStatus === 'rejected') {
         console.log('Status rejected');
@@ -65,12 +96,16 @@ const PendingApproval = ({ navigation }) => {
         }
       }
     } catch (error) {
+      console.error('=== ERROR in checkApprovalStatus ===');
       console.error('Error checking approval status:', error);
+      console.error('Error message:', error.message);
       if (!silent) {
         Alert.alert('Error', 'Failed to check approval status. Please try again.');
       }
     } finally {
+      console.log('Setting refreshing to false');
       setRefreshing(false);
+      console.log('=== Check Approval Status Ended ===');
     }
   };
 
@@ -185,7 +220,10 @@ const PendingApproval = ({ navigation }) => {
           shadowRadius: 4,
           elevation: 3
         }}
-        onPress={checkApprovalStatus}
+        onPress={() => {
+          console.log('Check Approval Status button pressed!');
+          checkApprovalStatus(false); // Explicitly set silent to false
+        }}
         disabled={refreshing}
       >
         {refreshing ? (

@@ -1,76 +1,79 @@
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { SafeAreaView } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { PersistGate } from "redux-persist/integration/react";
 import { Provider, useSelector } from "react-redux";
-import { store, persistor } from "./redux/store/Index";
+import { PersistGate } from "redux-persist/integration/react";
+import { persistor, store } from "./redux/store/Index";
 
 // Screens (Seller)
-import Splash from './Pages/Splash';
+import AccountSetting from './Pages/AccountSetting';
+import AddProduct from './Pages/AddProduct';
+import BottomTabSeller from './Pages/BottomTabSeller';
+import ComplaintMg from './Pages/ComplaintMg';
+import Delete from './Pages/Delete';
+import Delivery from './Pages/Delivery';
+import Email from './Pages/Email';
+import ForgotPassword from './Pages/ForgotPassword';
+import HelpCenter from './Pages/HelpCenter';
 import Home from './Pages/Home';
 import Login from './Pages/Login';
-import SignUp from './Pages/SignUp';
-import Password from './Pages/Password';
-import Profile from './Pages/Profile';
-import Delete from './Pages/Delete';
-import Reviews from './Pages/Reviews';
-import TermsOfService from './Pages/TermsOfService';
-import PrivacyPolicy from './Pages/PrivacyPolicy';
-import HelpCenter from './Pages/HelpCenter';
-import ForgotPassword from './Pages/ForgotPassword';
-import ViewProduct from './Pages/ViewProduct';
-import AddProduct from './Pages/AddProduct';
-import PickUp from './Pages/PickUp';
-import Email from './Pages/Email';
-import AccountSetting from './Pages/AccountSetting';
 import Logout from './Pages/Logout';
-import OrderPayment from './Pages/OrderPayment';
-import Delivery from './Pages/Delivery';
-import ComplaintMg from './Pages/ComplaintMg';
-import BottomTabSeller from './Pages/BottomTabSeller';
-import Notification from './Pages/Notification';
 import Management from './Pages/Management';
+import Notification from './Pages/Notification';
 import NotificationSettings from './Pages/NotificationSettings';
+import OrderPayment from './Pages/OrderPayment';
+import Password from './Pages/Password';
 import PendingApproval from './Pages/PendingApproval';
+import PickUp from './Pages/PickUp';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import Profile from './Pages/Profile';
+import Reviews from './Pages/Reviews';
+import SignUp from './Pages/SignUp';
+import Splash from './Pages/Splash';
+import TermsOfService from './Pages/TermsOfService';
+import ViewProduct from './Pages/ViewProduct';
 
 // Screens (Customer)
-import Profiles from './Pages/Profiles';
-import EProfile from './Pages/Eprofile';
-import CReview from './Pages/CReview';
-import OrderDetail from './Pages/OrderDetail';
+import BottomTab from './Pages/BottomTab';
 import CPending from './Pages/CPending';
+import CReview from './Pages/CReview';
 import Cancel from './Pages/Cancel';
 import Cart from './Pages/Cart';
 import Checkout from './Pages/Checkout';
 import Complain from './Pages/Complain';
 import Delivered from './Pages/Delivered';
 import Detail from './Pages/Detail';
+import EProfile from './Pages/Eprofile';
 import Home2 from './Pages/Home2';
-import VTO from './Pages/VTO';
 import Homestack from './Pages/Homestack';
-import Mhndi from './Pages/Mhndi';
-import Payment from "./Pages/Payment";
-import Order from "./Pages/Order";
 import Index from "./Pages/Index";
-import BottomTab from './Pages/BottomTab';
+import Mhndi from './Pages/Mhndi';
+import Order from "./Pages/Order";
+import OrderDetail from './Pages/OrderDetail';
+import Payment from "./Pages/Payment";
+import Profiles from './Pages/Profiles';
+import VTO from './Pages/VTO';
 
 const Stack = createNativeStackNavigator();
-const SellerStack = () => (
-  <Stack.Navigator 
-    initialRouteName="BottomTabSeller"
-    screenOptions={{
-      headerStyle: { backgroundColor: '#8E6652' },
-      headerTintColor: '#fff',
-      headerTitleStyle: { fontWeight: 'bold' },
-      headerBackTitleVisible: false,
-    }}
-  >
+const SellerStack = () => {
+  console.log('=== SellerStack Debug ===');
+  console.log('SellerStack is rendering');
+  console.log('Initial route should be: BottomTabSeller');
+  console.log('=== End SellerStack Debug ===');
+  
+  return (
+    <Stack.Navigator 
+      initialRouteName="BottomTabSeller"
+      screenOptions={{
+        headerStyle: { backgroundColor: '#8E6652' },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+        headerBackTitleVisible: false,
+      }}
+    >
     <Stack.Screen name="Splash" component={Splash} options={{ headerShown: false }} />
     <Stack.Screen name="BottomTabSeller" component={BottomTabSeller} options={{ headerShown: false }} />
     <Stack.Screen name="Home" component={Home}  />
-    <Stack.Screen name="Login" component={Login} />
-    <Stack.Screen name="SignUp" component={SignUp}  />
     <Stack.Screen name="Password" component={Password}  />
     <Stack.Screen name="Profile" component={Profile} />
     <Stack.Screen name="Delete" component={Delete}  />
@@ -93,7 +96,28 @@ const SellerStack = () => (
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
     <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
   </Stack.Navigator>
-);
+  );
+};
+
+const PendingStack = () => {
+  console.log('=== PendingStack Debug ===');
+  console.log('PendingStack is rendering');
+  console.log('=== End PendingStack Debug ===');
+  
+  return (
+    <Stack.Navigator 
+      initialRouteName="PendingApproval"
+      screenOptions={{
+        headerStyle: { backgroundColor: '#8E6652' },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
+        headerBackTitleVisible: false,
+      }}
+    >
+      <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
+    </Stack.Navigator>
+  );
+};
 
 const CustomerStack = () => (
   <Stack.Navigator initialRouteName="Complain">
@@ -124,27 +148,41 @@ const RenderStack = () => {
   const role = useSelector((state) => state.home.role);
   const user = useSelector((state) => state.home.user);
 
-  console.log('RenderStack - User status:', user?.status);
-  console.log('RenderStack - User role:', role);
+  alert (role)
+  
+  console.log('=== RenderStack Debug ===');
+  console.log('RenderStack - Role:', role);
+  console.log('RenderStack - User:', user);
+  console.log('RenderStack - User UID:', user?.uid);
+  console.log('=== End RenderStack Debug ===');
+  
+  // If user exists but role is empty, wait for role to be set
+  if (user?.uid && !role) {
+    console.log('User exists but role is empty, waiting...');
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#8E6652" />
+        <Text style={{ marginTop: 10 }}>Loading...</Text>
+      </View>
+    );
+  }
 
   switch (role) {
     case "Seller":
-      // Check if seller is approved
-      if (user?.status === "pending") {
-        // Show PendingApproval screen until admin approves
-        return (
-          <Stack.Navigator initialRouteName="PendingApproval">
-            <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
-          </Stack.Navigator>
-        );
-      }
-      // Show full seller features if approved
-      return <SellerStack />;
+      // Approved sellers go to seller stack
+      console.log('Rendering SellerStack for approved seller');
+      return <SellerStack key="seller-stack" />;
+    case "pending":
+      // Pending sellers go to pending stack
+      console.log('Rendering PendingStack for pending seller');
+      return <PendingStack key="pending-stack" />;
     case "Customer":
-      return <CustomerStack />;
+      console.log('Rendering CustomerStack for customer');
+      return <CustomerStack key="customer-stack" />;
     default:
+      console.log('Rendering auth stack - no role or user');
       return (
-        <Stack.Navigator initialRouteName="Login">
+        <Stack.Navigator key="auth-stack" initialRouteName="Login">
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="SignUp" component={SignUp} />
           <Stack.Screen name="Home" component={Home} />
@@ -159,7 +197,7 @@ const App = () => {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-          <RenderStack />
+          <RenderStack key="main-render-stack" />
         </SafeAreaView>
       </PersistGate>
     </Provider>

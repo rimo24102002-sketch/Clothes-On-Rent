@@ -1,9 +1,9 @@
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator, Dimensions } from 'react-native';
-import { logout } from '../Helper/firebaseHelper';
+import { ActivityIndicator, Alert, Dimensions, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUser, setRole } from '../redux/Slices/HomeDataSlice';
-import { MaterialIcons, Feather } from '@expo/vector-icons';
+import { logout } from '../Helper/firebaseHelper';
+import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -36,10 +36,10 @@ export default function Logout({ navigation }) {
               dispatch(setRole(''));
               
               // Navigate to login page
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
+              // navigation.reset({
+              //   index: 0,
+              //   routes: [{ name: 'Login' }],
+              // });
               
             } catch (error) {
               console.error('Logout error:', error);
