@@ -536,44 +536,6 @@ export const sendSupportEmail = async (supportData) => {
     }
 };
 
-// ✅ Send Seller Complaint to Admin
-export const sendSellerComplaint = async (complaintData) => {
-    try {
-        const docRef = await addDoc(collection(db, "seller_complaints"), {
-            ...complaintData,
-            timestamp: Date.now(),
-            status: "pending", // pending, in_progress, resolved
-            priority: complaintData.priority || "medium", // low, medium, high
-            createdAt: new Date().toISOString(),
-            adminResponse: null,
-            respondedAt: null,
-        });
-        console.log("Seller complaint sent to admin with ID:", docRef.id);
-        return docRef.id;
-    } catch (error) {
-        console.error("Error sending seller complaint:", error);
-        throw error;
-    }
-};
-
-// ✅ Get Seller's Complaint History
-export const getSellerComplaints = async (sellerId) => {
-    try {
-        const q = query(
-            collection(db, "seller_complaints"), 
-            where("sellerId", "==", sellerId),
-            where("timestamp", ">=", 0) // Add ordering
-        );
-        const snap = await getDocs(q);
-        const complaints = [];
-        snap.forEach(d => complaints.push({ id: d.id, ...d.data() }));
-        return complaints.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    } catch (error) {
-        console.error("Error getting seller complaints:", error);
-        throw error;
-    }
-};
-
 // ✅ Get seller reviews
 export const getSellerReviews = async (sellerId) => {
     try {
@@ -694,157 +656,137 @@ export const getTermsOfService = async () => {
 };
 
 //--------------------------------
-// 🔹 Complaint Management (Seller)
+// 🔹 Sample Data for Testing
 //--------------------------------
 
-// ✅ Get all complaints for a seller
-export const listComplaintsBySeller = async (sellerId) => {
-    try {
-        const q = query(collection(db, "complaints"), where("sellerId", "==", sellerId));
-        const snap = await getDocs(q);
-        const items = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-        return items;
-    } catch (e) {
-        console.error("Error listing complaints:", e);
-        throw e;
+// ✅ Add sample orders for testing
+export const addSampleOrders = async (sellerId) => {
+  try {
+    const sampleOrders = [
+      {
+        id: "ORD-001",
+        customer: "Ahmed Hassan",
+        address: "Block A, Gulberg III, Lahore",
+        items: ["Blue Formal Shirt", "Black Dress Pants"],
+        payment: "Rs. 2,500 (COD)",
+        status: "Pending",
+        createdAt: Date.now() - 86400000, // 1 day ago
+        sellerId: sellerId
+      },
+      {
+        id: "ORD-002", 
+        customer: "Fatima Khan",
+        address: "DHA Phase 5, Karachi",
+        items: ["Red Evening Dress", "Gold Jewelry Set"],
+        payment: "Rs. 4,200 (COD)",
+        status: "Delivered",
+        createdAt: Date.now() - 172800000, // 2 days ago
+        sellerId: sellerId
+      },
+      {
+        id: "ORD-003",
+        customer: "Ali Raza",
+        address: "F-8 Markaz, Islamabad", 
+        items: ["Wedding Sherwani", "Khussa Shoes"],
+        payment: "Rs. 6,800 (COD)",
+        status: "Pending",
+        createdAt: Date.now() - 43200000, // 12 hours ago
+        sellerId: sellerId
+      },
+      {
+        id: "ORD-004",
+        customer: "Ayesha Malik",
+        address: "Cantt Area, Rawalpindi",
+        items: ["Party Lehenga"],
+        payment: "Rs. 3,500 (COD)",
+        status: "Canceled",
+        createdAt: Date.now() - 259200000, // 3 days ago
+        sellerId: sellerId
+      }
+    ];
+
+    for (const order of sampleOrders) {
+      await addDoc(collection(db, "orders"), order);
     }
+    
+    console.log("Sample orders added successfully!");
+    return true;
+  } catch (error) {
+    console.error("Error adding sample orders:", error);
+    throw error;
+  }
 };
 
-// ✅ Create a new complaint (usually from customer, but seller can create too)
-export const createComplaint = async (sellerId, complaint) => {
-    try {
-        const payload = {
-            ...complaint,
-            sellerId,
-            status: complaint?.status || "Open",
-            priority: complaint?.priority || "Medium",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        };
-        const ref = await addDoc(collection(db, "complaints"), payload);
-        return ref.id;
-    } catch (e) {
-        console.error("Error creating complaint:", e);
-        throw e;
-    }
-};
+// ✅ Add sample deliveries for testing
+export const addSampleDeliveries = async (sellerId) => {
+  try {
+    const sampleDeliveries = [
+      {
+        id: "DEL-001",
+        orderId: "ORD-001",
+        customer: "Ahmed Hassan",
+        address: "Block A, Gulberg III, Lahore",
+        items: ["Blue Formal Shirt", "Black Dress Pants"],
+        status: "Scheduled",
+        rider: "Muhammad Usman",
+        riderPhone: "+92 300 1234567",
+        scheduledDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+        createdAt: Date.now() - 86400000,
+        sellerId: sellerId
+      },
+      {
+        id: "DEL-002",
+        orderId: "ORD-002", 
+        customer: "Fatima Khan",
+        address: "DHA Phase 5, Karachi",
+        items: ["Red Evening Dress", "Gold Jewelry Set"],
+        status: "Delivered",
+        rider: "Hassan Ali",
+        riderPhone: "+92 301 9876543",
+        scheduledDate: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+        deliveredAt: Date.now() - 43200000, // 12 hours ago
+        createdAt: Date.now() - 172800000,
+        sellerId: sellerId
+      },
+      {
+        id: "DEL-003",
+        orderId: "ORD-003",
+        customer: "Ali Raza", 
+        address: "F-8 Markaz, Islamabad",
+        items: ["Wedding Sherwani", "Khussa Shoes"],
+        status: "In Transit",
+        rider: "Tariq Mahmood",
+        riderPhone: "+92 302 5555555",
+        scheduledDate: new Date().toISOString(), // Today
+        createdAt: Date.now() - 43200000,
+        sellerId: sellerId
+      },
+      {
+        id: "DEL-004",
+        orderId: "ORD-005",
+        customer: "Sara Ahmed",
+        address: "Model Town, Lahore",
+        items: ["Bridal Dress", "Matching Dupatta"],
+        status: "Failed",
+        rider: "Imran Sheikh",
+        riderPhone: "+92 303 7777777",
+        scheduledDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        failureReason: "Customer not available",
+        createdAt: Date.now() - 259200000,
+        sellerId: sellerId
+      }
+    ];
 
-// ✅ Update complaint (status, response, etc.)
-export const updateComplaint = async (id, updates) => {
-    try {
-        const payload = { 
-            ...updates, 
-            updatedAt: Date.now() 
-        };
-        await updateDoc(doc(db, "complaints", id), payload);
-        return true;
-    } catch (e) {
-        console.error("Error updating complaint:", e);
-        throw e;
+    for (const delivery of sampleDeliveries) {
+      await addDoc(collection(db, "deliveries"), delivery);
     }
-};
-
-// ✅ Delete complaint
-export const deleteComplaint = async (id) => {
-    try {
-        await deleteDoc(doc(db, "complaints", id));
-        return true;
-    } catch (e) {
-        console.error("Error deleting complaint:", e);
-        throw e;
-    }
-};
-
-// ✅ Add response to complaint
-export const addComplaintResponse = async (id, response) => {
-    try {
-        await updateDoc(doc(db, "complaints", id), {
-            response,
-            status: "In Progress",
-            respondedAt: Date.now(),
-            updatedAt: Date.now(),
-        });
-        return true;
-    } catch (e) {
-        console.error("Error adding complaint response:", e);
-        throw e;
-    }
-};
-
-// ✅ Mark complaint as resolved
-export const resolveComplaint = async (id, resolution = "") => {
-    try {
-        await updateDoc(doc(db, "complaints", id), {
-            status: "Resolved",
-            resolution,
-            resolvedAt: Date.now(),
-            updatedAt: Date.now(),
-        });
-        return true;
-    } catch (e) {
-        console.error("Error resolving complaint:", e);
-        throw e;
-    }
-};
-
-// ✅ Add sample complaints for testing (remove this in production)
-export const addSampleComplaints = async (sellerId) => {
-    try {
-        console.log("addSampleComplaints called with sellerId:", sellerId);
-        
-        if (!sellerId) {
-            throw new Error("Seller ID is required");
-        }
-        
-        const sampleComplaints = [
-            {
-                orderId: "ORD-1001",
-                customer: "John Doe",
-                customerEmail: "john@example.com",
-                type: "Product Quality",
-                priority: "High",
-                description: "Received item with a tear on the sleeve. Very disappointed with the quality.",
-                status: "Open"
-            },
-            {
-                orderId: "ORD-1002", 
-                customer: "Sarah Wilson",
-                customerEmail: "sarah@example.com",
-                type: "Late Delivery",
-                priority: "Medium",
-                description: "Order was supposed to be delivered on August 23rd but arrived 3 days late.",
-                status: "In Progress",
-                response: "We apologize for the delay. We've contacted the delivery service and are investigating."
-            },
-            {
-                orderId: "ORD-1003",
-                customer: "Mike Brown", 
-                customerEmail: "mike@example.com",
-                type: "Wrong Size",
-                priority: "Low",
-                description: "Ordered size M but received size L. Need to exchange.",
-                status: "Resolved",
-                response: "Exchange processed successfully. New item shipped.",
-                resolution: "Customer satisfied with exchange process."
-            }
-        ];
-
-        console.log("Creating", sampleComplaints.length, "sample complaints...");
-        
-        for (let i = 0; i < sampleComplaints.length; i++) {
-            const complaint = sampleComplaints[i];
-            console.log(`Creating complaint ${i + 1}:`, complaint);
-            const complaintId = await createComplaint(sellerId, complaint);
-            console.log('Complaint ${i + 1} created with ID:', complaintId);
-        }
-        
-        console.log("All sample complaints added successfully!");
-        return true;
-    } catch (error) {
-        console.error("Error adding sample complaints:", error);
-        throw error;
-    }
+    
+    console.log("Sample deliveries added successfully!");
+    return true;
+  } catch (error) {
+    console.error("Error adding sample deliveries:", error);
+    throw error;
+  }
 };
 
 //--------------------------------
@@ -1010,6 +952,102 @@ export const getSellerStats = async () => {
         };
     } catch (error) {
         console.error("Error getting seller stats:", error);
+        throw error;
+    }
+}
+
+//--------------------------------
+// 🔹 Stock Management Services
+//--------------------------------
+
+// Automatically manage available sizes based on stock levels
+export const getAvailableSizes = (stock) => {
+    const allSizes = ['S', 'M', 'L', 'XL'];
+    return allSizes.filter(size => {
+        const qty = Number(stock?.[size] || 0);
+        return qty > 0; // Only show sizes that have stock
+    });
+};
+
+// Update stock and automatically adjust available sizes
+export const updateProductStock = async (productId, newStock) => {
+    try {
+        const availableSizes = getAvailableSizes(newStock);
+        
+        const updateData = {
+            stock: newStock,
+            sizes: availableSizes, // Automatically update available sizes
+            lastStockUpdate: new Date().toISOString()
+        };
+        
+        await updateProduct(productId, updateData);
+        return { success: true, availableSizes };
+    } catch (error) {
+        console.error('Error updating stock:', error);
+        throw error;
+    }
+};
+
+// Reduce stock when item is rented (for future use)
+export const reduceStock = async (productId, size, quantity = 1) => {
+    try {
+        const productDoc = await getDoc(doc(db, 'products', productId));
+        if (!productDoc.exists()) {
+            throw new Error('Product not found');
+        }
+        
+        const product = productDoc.data();
+        const currentStock = product.stock || {};
+        const currentQty = Number(currentStock[size] || 0);
+        
+        if (currentQty < quantity) {
+            throw new Error(`Insufficient stock for size ${size}`);
+        }
+        
+        const newStock = {
+            ...currentStock,
+            [size]: Math.max(0, currentQty - quantity)
+        };
+        
+        return await updateProductStock(productId, newStock);
+    } catch (error) {
+        console.error('Error reducing stock:', error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Image Upload Services
+//--------------------------------
+
+// Upload image to Cloudinary
+export const uploadImageToCloudinary = async (imageUri) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', {
+            uri: imageUri,
+            type: 'image/jpeg',
+            name: 'profile.jpg',
+        });
+        formData.append('upload_preset', 'react_native_uploads');
+
+        const response = await fetch('https://api.cloudinary.com/v1_1/drrr99dz9/image/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        const data = await response.json();
+        
+        if (data.secure_url) {
+            return data.secure_url;
+        } else {
+            throw new Error('Upload failed');
+        }
+    } catch (error) {
+        console.error('Error uploading image to Cloudinary:', error);
         throw error;
     }
 };

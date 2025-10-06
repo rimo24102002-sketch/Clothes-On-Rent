@@ -9,7 +9,6 @@ import { persistor, store } from "./redux/store/Index";
 import AccountSetting from './Pages/AccountSetting';
 import AddProduct from './Pages/AddProduct';
 import BottomTabSeller from './Pages/BottomTabSeller';
-import ComplaintMg from './Pages/ComplaintMg';
 import Delete from './Pages/Delete';
 import Delivery from './Pages/Delivery';
 import Email from './Pages/Email';
@@ -84,13 +83,12 @@ const SellerStack = () => {
     <Stack.Screen name="ForgotPassword" component={ForgotPassword}  />
     <Stack.Screen name="ViewProduct" component={ViewProduct}  />
     <Stack.Screen name="AddProduct" component={AddProduct} options={{ headerShown: false }} />
-    <Stack.Screen name="PickUp" component={PickUp}  />
+    <Stack.Screen name="PickUp" component={PickUp} options={{ headerShown: false }} />
     <Stack.Screen name="Email" component={Email}  />
     <Stack.Screen name="AccountSetting" component={AccountSetting}  />
     <Stack.Screen name="Logout" component={Logout}  />
     <Stack.Screen name="OrderPayment" component={OrderPayment}  />
-    <Stack.Screen name="Delivery" component={Delivery}  />
-    <Stack.Screen name="ComplaintMg" component={ComplaintMg} />
+    <Stack.Screen name="Delivery" component={Delivery} options={{ headerShown: false }} />
     <Stack.Screen name="Notification" component={Notification} />
     <Stack.Screen name="Management" component={Management}/>
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
@@ -120,7 +118,7 @@ const PendingStack = () => {
 };
 
 const CustomerStack = () => (
-  <Stack.Navigator initialRouteName="Complain">
+  <Stack.Navigator initialRouteName="BottomTab">
     <Stack.Screen name="Profiles" component={Profiles} />
     <Stack.Screen name="EProfile" component={EProfile} />
     <Stack.Screen name="CReview" component={CReview} />
@@ -139,7 +137,7 @@ const CustomerStack = () => (
     <Stack.Screen name="Payment" component={Payment} />
     <Stack.Screen name="Order" component={Order} />
     <Stack.Screen name="Index" component={Index} />
-    <Stack.Screen name="BottomTab" component={BottomTab} />
+    <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
 
   </Stack.Navigator>
 );
@@ -167,7 +165,10 @@ const RenderStack = () => {
     );
   }
 
-  switch (role) {
+  // Force customer mode for testing
+  const forceRole = "Customer";
+  
+  switch (forceRole) {
     case "Seller":
       // Approved sellers go to seller stack
       console.log('Rendering SellerStack for approved seller');

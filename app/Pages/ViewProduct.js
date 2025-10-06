@@ -3,11 +3,10 @@ import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, FlatList, Alert
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
-import { deleteProduct, listProductsBySeller, updateProduct, uploadImageToCloudinary, getProductCategories, getCategoryById } from '../Helper/firebaseHelper';
+import { deleteProduct, listProductsBySeller, updateProduct, uploadImageToCloudinary, getProductCategories, getCategoryById, getAvailableSizes, updateProductStock } from '../Helper/firebaseHelper';
+import StandardHeader from '../Components/StandardHeader';
 
-export default function Products() {
-  const router = useRouter();
+export default function Products({ navigation }) {
   const user = useSelector((s) => s.home.user);
   const sellerId = user?.sellerId || user?.uid || '';
   const [products, setProducts] = useState([]);
@@ -91,18 +90,126 @@ export default function Products() {
         <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', marginTop: 6 }}>${item.price ?? 0}/day</Text>
         <Text style={{ fontSize: 14, color: '#333', marginTop: 2 }}>Security: ${item.securityFee ?? 0}</Text>
         
-        {/* Sizes and Stock */}
+        {/* Sizes and Stock - Auto-managed by Stock Level */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 }}>
-          {(item.sizes || ['S','M','L']).map(size => {
+          {/* Show all sizes but highlight available ones */}
+          {['S','M','L','XL'].map(size => {
             const stockQty = item.stock?.[size] || 0;
+            const isOutOfStock = Number(stockQty) === 0;
+            const isLowStock = Number(stockQty) > 0 && Number(stockQty) <= 2;
+            
             return (
-              <View key={size} style={{ backgroundColor: Number(stockQty) > 0 ? '#E8F5E9' : '#FFEBEE', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginRight: 6, marginBottom: 4 }}>
-                <Text style={{ fontSize: 11, color: '#333' }}>{size}: {stockQty}</Text>
+              <View 
+                key={size} 
+                style={{ 
+                  backgroundColor: isOutOfStock ? '#F5F5F5' : isLowStock ? '#FFF3E0' : '#E8F5E9', 
+                  paddingHorizontal: 10, 
+                  paddingVertical: 6, 
+                  borderRadius: 8, 
+                  marginRight: 8, 
+                  marginBottom: 6,
+                  borderWidth: 1,
+                  borderColor: isOutOfStock ? '#E0E0E0' : isLowStock ? '#FFB74D' : '#C8E6C9',
+                  opacity: isOutOfStock ? 0.6 : 1,
+                  position: 'relative'
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 12, 
+                  color: isOutOfStock ? '#999' : '#333',
+                  fontWeight: '600',
+                  textDecorationLine: isOutOfStock ? 'line-through' : 'none'
+                }}>
+                  {size}
+                </Text>
+                <Text style={{ 
+                  fontSize: 10, 
+                  color: isOutOfStock ? '#999' : '#666',
+                  marginTop: 2,
+                  textDecorationLine: isOutOfStock ? 'line-through' : 'none'
+                }}>
+                  {stockQty} pcs
+                </Text>
+                
+                {/* Cross line overlay for out of stock - Daraz Style */}
+                {isOutOfStock && (
+                  <>
+                    {/* Diagonal cross line */}
+                    <View style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <View style={{
+                        width: '140%',
+                        height: 1.5,
+                        backgroundColor: '#F44336',
+                        transform: [{ rotate: '-45deg' }]
+                      }} />
+                    </View>
+                    {/* Second diagonal line for better visibility */}
+                    <View style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <View style={{
+                        width: '140%',
+                        height: 1.5,
+                        backgroundColor: '#F44336',
+                        transform: [{ rotate: '45deg' }]
+                      }} />
+                    </View>
+                  </>
+                )}
               </View>
             );
           })}
         </View>
-        <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>Total Stock: {totalStock} pcs</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+          <Text style={{ fontSize: 12, color: '#666' }}>Total Stock: {totalStock} pcs</Text>
+          {totalStock === 0 && (
+            <View style={{ 
+              backgroundColor: '#FFEBEE', 
+              paddingHorizontal: 8, 
+              paddingVertical: 2, 
+              borderRadius: 4, 
+              marginLeft: 8 
+            }}>
+              <Text style={{ fontSize: 10, color: '#F44336', fontWeight: '600' }}>OUT OF STOCK</Text>
+            </View>
+          )}
+          {totalStock > 0 && totalStock <= 5 && (
+            <View style={{ 
+              backgroundColor: '#FFF3E0', 
+              paddingHorizontal: 8, 
+              paddingVertical: 2, 
+              borderRadius: 4, 
+              marginLeft: 8 
+            }}>
+              <Text style={{ fontSize: 10, color: '#FF9800', fontWeight: '600' }}>LOW STOCK</Text>
+            </View>
+          )}
+          {totalStock > 5 && (
+            <View style={{ 
+              backgroundColor: '#E8F5E9', 
+              paddingHorizontal: 8, 
+              paddingVertical: 2, 
+              borderRadius: 4, 
+              marginLeft: 8 
+            }}>
+              <Text style={{ fontSize: 10, color: '#4CAF50', fontWeight: '600' }}>IN STOCK</Text>
+            </View>
+          )}
+        </View>
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 12, borderTopWidth: 1, borderTopColor: '#F0F0F0' }}>
         <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => { 
@@ -133,31 +240,64 @@ export default function Products() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
-      {/* Custom Header */}
-      <View style={{ backgroundColor: '#8E6652', paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
-          <Feather name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: '#fff' }}>My Products</Text>
-      </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, color: '#666' }}>Total Products: {products.length}</Text>
-            <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>Approved: {products.filter(p => p.status === 'approved').length} | Pending: {products.filter(p => p.status === 'pending').length}</Text>
-          </View>
+      <StandardHeader 
+        title="My Products" 
+        navigation={navigation}
+        rightComponent={
           <TouchableOpacity 
-            style={{ backgroundColor: '#8E6652', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }} 
-            onPress={() => router.push('/Pages/AddProduct')}
+            style={{ backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }} 
+            onPress={() => navigation.navigate('AddProduct')}
           >
-            <Feather name="plus" size={18} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '700', marginLeft: 6 }}>Add Product</Text>
+            <Feather name="plus" size={16} color="#8E6652" />
+            <Text style={{ color: '#8E6652', fontWeight: '600', marginLeft: 4, fontSize: 12 }}>Add</Text>
           </TouchableOpacity>
+        }
+      />
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
+          <Text style={{ fontSize: 14, color: '#666' }}>Total Products: {products.length}</Text>
+          <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>Approved: {products.filter(p => p.status === 'approved').length} | Pending: {products.filter(p => p.status === 'pending').length}</Text>
         </View>
-        <FlatList data={products} renderItem={renderItem} keyExtractor={(i) => i.id} ListEmptyComponent={<Text style={{ textAlign: 'center', color: '#666' }}>No products yet.</Text>} />
+        <FlatList 
+          data={products} 
+          renderItem={renderItem} 
+          keyExtractor={(i) => i.id} 
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <Feather name="package" size={48} color="#8E6652" style={{ marginBottom: 16 }} />
+              <Text style={{ fontSize: 16, color: '#666', fontWeight: '600', marginBottom: 8 }}>No products yet</Text>
+              <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', paddingHorizontal: 40 }}>
+                Start by adding your first product to showcase your items
+              </Text>
+              <TouchableOpacity 
+                style={{ 
+                  backgroundColor: '#8E6652', 
+                  paddingHorizontal: 20, 
+                  paddingVertical: 12, 
+                  borderRadius: 8, 
+                  marginTop: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center'
+                }} 
+                onPress={() => navigation.navigate('AddProduct')}
+              >
+                <Feather name="plus" size={16} color="#fff" />
+                <Text style={{ color: '#fff', fontWeight: '600', marginLeft: 6 }}>Add Your First Product</Text>
+              </TouchableOpacity>
+            </View>
+          } 
+        />
         <Modal visible={!!editing} transparent onRequestClose={() => setEditing(null)}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-            <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18, maxHeight: '80%' }}>
+          <TouchableOpacity 
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+            activeOpacity={1}
+            onPress={() => setEditing(null)}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 18, maxHeight: '80%' }}
+            >
               <ScrollView>
                 <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 10 }}>Edit Product</Text>
                 <TextInput placeholder="Name" value={editForm.name} onChangeText={(t) => setEditForm({ ...editForm, name: t })} style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 10, marginBottom: 10 }} />
@@ -183,24 +323,31 @@ export default function Products() {
                 </TouchableOpacity>
                 <TouchableOpacity style={{ padding: 10, borderRadius: 10, backgroundColor: '#8E6652' }} onPress={async () => {
                   try {
-                    const sizes = editForm.sizesText.split(',').map(s => s.trim()).filter(Boolean);
                     const stockObj = {};
                     editForm.stockText.split(',').forEach(pair => {
                       const [size, qty] = pair.split(':').map(s => s.trim());
-                      if (size && qty) stockObj[size] = qty;
+                      if (size && qty) stockObj[size] = Number(qty) || 0;
                     });
+                    
+                    // Use automatic stock management
+                    await updateProductStock(editing.id, stockObj);
+                    
+                    // Update other product details
                     await updateProduct(editing.id, { 
                       name: editForm.name, 
                       price: Number(editForm.price) || 0, 
                       categoryId: editForm.categoryId,
                       categoryName: editForm.categoryName,
-                      securityFee: Number(editForm.securityFee) || 0, 
-                      sizes,
-                      stock: stockObj
+                      securityFee: Number(editForm.securityFee) || 0
                     });
+                    
                     setEditing(null);
                     await load();
-                  } catch (e) { Alert.alert('Error', 'Failed to save'); }
+                    Alert.alert('Success', 'Product updated! Available sizes automatically adjusted based on stock.');
+                  } catch (e) { 
+                    console.error('Update error:', e);
+                    Alert.alert('Error', 'Failed to save changes'); 
+                  }
                 }}>
                   <Text style={{ color: '#fff', fontWeight: '700' }}>Save</Text>
                 </TouchableOpacity>
@@ -218,14 +365,22 @@ export default function Products() {
                 <Text style={{ color: '#333', fontWeight: '700' }}>Update Image</Text>
               </TouchableOpacity>
               </ScrollView>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
         {/* Category Selection Modal */}
         <Modal visible={categoryModalVisible} transparent animationType="slide" onRequestClose={() => setCategoryModalVisible(false)}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-            <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+          <TouchableOpacity 
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+            activeOpacity={1}
+            onPress={() => setCategoryModalVisible(false)}
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+              style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}
+            >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 18, fontWeight: '700', color: '#333' }}>Select Category</Text>
                 <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
@@ -250,8 +405,8 @@ export default function Products() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
       </ScrollView>
     </SafeAreaView>

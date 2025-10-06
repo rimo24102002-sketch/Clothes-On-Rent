@@ -1,13 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, ScrollView } from "react-native";
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  FlatList, 
+  ScrollView, 
+  SafeAreaView, 
+  RefreshControl, 
+  ActivityIndicator, 
+  TextInput, 
+  Alert 
+} from "react-native";
 import { useSelector } from "react-redux";
 import { listOrdersBySeller, updateOrder } from "../Helper/firebaseHelper";
+import { Feather } from "@expo/vector-icons";
+import StandardHeader from '../Components/StandardHeader';
 
-export default function SellerOrders() {
+export default function SellerOrders({ navigation }) {
   const user = useSelector((s) => s.home.user);
   const sellerId = user?.sellerId || user?.uid || "";
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -50,8 +66,12 @@ export default function SellerOrders() {
   );
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16, color: "#8E6652" }}>Seller Orders</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
+      <StandardHeader 
+        title="Order Management" 
+        navigation={navigation} 
+      />
+      <View style={{ flex: 1, padding: 16 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         {["All", "Pending", "Delivered", "Canceled"].map((status) => (
           <TouchableOpacity key={status} onPress={() => setFilter(status)} style={{ backgroundColor: filter === status ? "#8E6652" : "#E5E8E8", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, marginRight: 8, alignSelf: "flex-start" }}>
@@ -60,6 +80,7 @@ export default function SellerOrders() {
         ))}
       </ScrollView>
       <FlatList data={filteredOrders} renderItem={renderOrder} keyExtractor={(o) => o.id} ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 40 }}>No orders found.</Text>} />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }

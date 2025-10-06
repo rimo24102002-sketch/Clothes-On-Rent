@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, TextInput, Image, Modal } from "react-native";
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, TextInput, Image, Modal, Alert } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useSelector } from "react-redux";
@@ -17,6 +17,15 @@ export default function Profile({ navigation }) {
 
   const handleImagePicker = async () => {
     try {
+      // Request permission first
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
+        return;
+      }
+
+      setShowImageModal(false); // Close modal first
+
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -26,21 +35,79 @@ export default function Profile({ navigation }) {
 
       if (!result.canceled && result.assets?.length > 0) {
         const imageUri = result.assets[0].uri;
-        const uploadedImageUrl = await uploadImageToCloudinary(imageUri);
-        console.log("Uploaded Image URL:", uploadedImageUrl);
         
-        setImageUrl(uploadedImageUrl);
-        updateData("users", user.uid, { profileImage: uploadedImageUrl });
+        try {
+          const uploadedImageUrl = await uploadImageToCloudinary(imageUri);
+          console.log("Uploaded Image URL:", uploadedImageUrl);
+          
+          setImageUrl(uploadedImageUrl);
+          await updateData("users", user.uid, { profileImage: uploadedImageUrl });
+        } catch (uploadError) {
+          console.error("Upload error:", uploadError);
+          Alert.alert("Upload Failed", "Failed to upload image. Please try again.");
+        }
       }
     } catch (error) {
-      console.log("Error picking image:", error);
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to select image. Please try again.");
+    }
+  };
+
+  const takePhotoWithCamera = async () => {
+    try {
+      // Request camera permission
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow camera access to take photos.');
+        return;
+      }
+
+      setShowImageModal(false); // Close modal first
+
+      let result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.length > 0) {
+        const imageUri = result.assets[0].uri;
+        
+        try {
+          const uploadedImageUrl = await uploadImageToCloudinary(imageUri);
+          console.log("Uploaded Image URL:", uploadedImageUrl);
+          
+          setImageUrl(uploadedImageUrl);
+          await updateData("users", user.uid, { profileImage: uploadedImageUrl });
+        } catch (uploadError) {
+          console.error("Upload error:", uploadError);
+          Alert.alert("Upload Failed", "Failed to upload image. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to take photo. Please try again.");
     }
   };
 
   const removeProfile = () => {
-    setShowImageModal(false);
-    setImageUrl(null);
-    updateData("users", user.uid, { profileImage: null });
+    Alert.alert(
+      "Remove Image",
+      "Are you sure you want to remove your profile image?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            setShowImageModal(false);
+            setImageUrl(null);
+            updateData("users", user.uid, { profileImage: null });
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -131,6 +198,14 @@ export default function Profile({ navigation }) {
                 <Feather name="image" size={20} color="#8E6652" />
               </View>
               <Text style={{fontSize:16,color:"#333",fontWeight:"600",marginLeft:15}}>Choose from Gallery</Text>
+            </TouchableOpacity>
+
+            {/* Take Photo with Camera */}
+            <TouchableOpacity style={{flexDirection:"row",alignItems:"center",paddingVertical:15,borderBottomWidth:1,borderBottomColor:"#F5F5F5"}} onPress={takePhotoWithCamera}>
+              <View style={{width:40,height:40,borderRadius:20,backgroundColor:"#E8F5E8",justifyContent:"center",alignItems:"center"}}>
+                <Feather name="camera" size={20} color="#4CAF50" />
+              </View>
+              <Text style={{fontSize:16,color:"#333",fontWeight:"600",marginLeft:15}}>Take Photo</Text>
             </TouchableOpacity>
 
             {/* Remove Image (only if exists) */}

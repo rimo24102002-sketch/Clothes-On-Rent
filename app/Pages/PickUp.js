@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView, A
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSelector } from 'react-redux';
 import { createPickup, listPickupsBySeller, updatePickup } from '../Helper/firebaseHelper';
+import StandardHeader from '../Components/StandardHeader';
 
-export default function PickupManagement() {
+export default function PickupManagement({ navigation }) {
   const user = useSelector((s) => s.home.user);
   const sellerId = user?.sellerId || user?.uid || '';
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,13 +75,18 @@ export default function PickupManagement() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
-        <Text style={{ flex: 1, fontSize: 20, fontWeight: '700', color: '#8E6652' }}>Pickup Management</Text>
-        <TouchableOpacity style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8E6652', alignItems: 'center', justifyContent: 'center' }} onPress={() => setAddVisible(true)}>
-          <Ionicons name="add" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <StandardHeader 
+        title="Pickup Management" 
+        navigation={navigation}
+        rightComponent={
+          <TouchableOpacity 
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }} 
+            onPress={() => setAddVisible(true)}
+          >
+            <Ionicons name="add" size={22} color="#8E6652" />
+          </TouchableOpacity>
+        }
+      />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', margin: 16, borderRadius: 10, paddingHorizontal: 12, height: 44, backgroundColor: '#fff' }}>
         <Ionicons name="search" size={18} color="#888" style={{ marginRight: 8 }} />

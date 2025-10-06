@@ -14,17 +14,15 @@ import {
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
-import { addProduct, uploadImageToCloudinary, getProductCategories } from '../Helper/firebaseHelper';
+import { addProduct, uploadImageToCloudinary, getProductCategories, getAvailableSizes } from '../Helper/firebaseHelper';
+import StandardHeader from '../Components/StandardHeader';
 
-export default function AddProduct() {
-  const router = useRouter();
+export default function AddProduct({ navigation }) {
   const user = useSelector((s) => s.home.user);
   const sellerId = user?.sellerId || user?.uid || '';
   
   const [loading, setLoading] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [sizeStockModalVisible, setSizeStockModalVisible] = useState(false);
   
   const categories = getProductCategories();
   
@@ -36,11 +34,8 @@ export default function AddProduct() {
     categoryId: '',
     categoryName: '',
     imageUrl: '',
-    sizes: ['S', 'M', 'L', 'XL'],
-    stock: { S: '', M: '', L: '', XL: '' }
+    stock: { S: '', M: '', L: '', XL: '' } // Let seller decide per size
   });
-
-  const [tempStock, setTempStock] = useState({ S: '', M: '', L: '', XL: '' });
 
   const handleImagePick = async () => {
     try {
@@ -68,10 +63,6 @@ export default function AddProduct() {
     setCategoryModalVisible(false);
   };
 
-  const handleSaveSizeStock = () => {
-    setForm({ ...form, stock: { ...tempStock } });
-    setSizeStockModalVisible(false);
-  };
 
   const handleSubmit = async () => {
     // Validation
@@ -97,6 +88,18 @@ export default function AddProduct() {
     try {
       setLoading(true);
       
+      // Use seller's individual size stock
+      const stockDistribution = {};
+      Object.keys(form.stock).forEach(size => {
+        const qty = Number(form.stock[size]) || 0;
+        if (qty > 0) {
+          stockDistribution[size] = qty;
+        }
+      });
+      
+      // Automatically determine available sizes based on stock
+      const availableSizes = getAvailableSizes(stockDistribution);
+      
       const productData = {
         name: form.name.trim(),
         price: Number(form.price),
@@ -105,19 +108,37 @@ export default function AddProduct() {
         categoryId: form.categoryId,
         categoryName: form.categoryName,
         imageUrl: form.imageUrl,
-        sizes: form.sizes,
-        stock: form.stock,
+        sizes: availableSizes, // Only sizes with stock > 0
+        stock: stockDistribution,
+        lastStockUpdate: new Date().toISOString()
       };
 
       await addProduct(sellerId, productData);
       
       Alert.alert(
-        'Product Submitted!',
+        '🎉 Product Submitted Successfully!',
         'Your product has been submitted and is pending admin approval. You will be notified once it is approved.',
         [
           {
-            text: 'OK',
-            onPress: () => router.back()
+            text: 'Add Another Product',
+            onPress: () => {
+              // Reset form for another product
+              setForm({
+                name: '',
+                price: '',
+                securityFee: '',
+                description: '',
+                categoryId: '',
+                categoryName: '',
+                imageUrl: '',
+                stock: { S: '', M: '', L: '', XL: '' }
+              });
+            }
+          },
+          {
+            text: 'View My Products',
+            onPress: () => navigation.goBack(),
+            style: 'default'
           }
         ]
       );
@@ -125,19 +146,16 @@ export default function AddProduct() {
       console.error('Error adding product:', error);
       Alert.alert('Error', 'Failed to add product. Please try again.');
     } finally {
-      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
-      {/* Custom Header */}
-      <View style={{ backgroundColor: '#8E6652', paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
-          <Feather name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: '#fff' }}>Add New Product</Text>
-      </View>
+      <StandardHeader 
+        title="Add Product" 
+        navigation={navigation} 
+        showBackButton={true}
+      />
       
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         {/* Image Upload */}
@@ -286,61 +304,80 @@ export default function AddProduct() {
           </View>
         </View>
 
-        {/* Sizes & Stock */}
+        {/* Stock per Size - Seller Controlled */}
         <View style={{ marginBottom: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 }}>
-            Available Sizes & Stock *
+            Stock per Size *
           </Text>
-          <TouchableOpacity
-            onPress={() => {
-              setTempStock({ ...form.stock });
-              setSizeStockModalVisible(true);
-            }}
-            style={{
-              backgroundColor: '#fff',
-              borderWidth: 1,
-              borderColor: '#ddd',
-              borderRadius: 10,
-              padding: 12,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <Text style={{ fontSize: 14, color: '#333' }}>
-              Configure sizes and stock
-            </Text>
-            <Feather name="edit-2" size={18} color="#8E6652" />
-          </TouchableOpacity>
+          <Text style={{ fontSize: 12, color: '#666', marginBottom: 12 }}>
+            👕 Enter stock for each size (leave empty if size not available)
+          </Text>
           
-          {/* Display current stock */}
-          <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap' }}>
-            {form.sizes.map(size => {
-              const stockQty = form.stock[size] || '0';
-              return (
-                <View 
-                  key={size}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['S', 'M', 'L', 'XL'].map(size => (
+              <View key={size} style={{ flex: 1, minWidth: 70 }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: '#333', marginBottom: 4, textAlign: 'center' }}>
+                  Size {size}
+                </Text>
+                <TextInput
+                  placeholder="0"
+                  value={form.stock[size]}
+                  onChangeText={(text) => setForm({ 
+                    ...form, 
+                    stock: { ...form.stock, [size]: text }
+                  })}
+                  keyboardType="numeric"
                   style={{
-                    backgroundColor: Number(stockQty) > 0 ? '#E8F5E9' : '#FFEBEE',
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
+                    backgroundColor: '#fff',
+                    borderWidth: 1,
+                    borderColor: '#ddd',
                     borderRadius: 8,
-                    marginRight: 8,
-                    marginBottom: 8,
-                    flexDirection: 'row',
-                    alignItems: 'center'
+                    padding: 10,
+                    fontSize: 14,
+                    textAlign: 'center'
                   }}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#333', marginRight: 4 }}>
-                    {size}:
-                  </Text>
-                  <Text style={{ fontSize: 12, color: '#666' }}>
-                    {stockQty} pcs
-                  </Text>
-                </View>
-              );
-            })}
+                />
+              </View>
+            ))}
           </View>
+          
+          {/* Preview available sizes */}
+          <View style={{ marginTop: 8, padding: 8, backgroundColor: '#F8F9FA', borderRadius: 6 }}>
+            <Text style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>
+              📋 Available to customers:
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {['S', 'M', 'L', 'XL'].map(size => {
+                const qty = Number(form.stock[size]) || 0;
+                if (qty > 0) {
+                  return (
+                    <View key={size} style={{ 
+                      backgroundColor: '#E8F5E9', 
+                      paddingHorizontal: 6, 
+                      paddingVertical: 2, 
+                      borderRadius: 4, 
+                      marginRight: 4, 
+                      marginBottom: 2 
+                    }}>
+                      <Text style={{ fontSize: 10, color: '#4CAF50', fontWeight: '600' }}>
+                        {size}: {qty}
+                      </Text>
+                    </View>
+                  );
+                }
+                return null;
+              })}
+              {Object.values(form.stock).every(val => !Number(val)) && (
+                <Text style={{ fontSize: 10, color: '#999', fontStyle: 'italic' }}>
+                  No sizes available yet
+                </Text>
+              )}
+            </View>
+          </View>
+          
+          <Text style={{ fontSize: 11, color: '#8E6652', marginTop: 4, fontWeight: '600' }}>
+            ✨ Smart Feature: Only sizes with stock will show to customers
+          </Text>
         </View>
 
         {/* Description */}
@@ -417,14 +454,22 @@ export default function AddProduct() {
         animationType="slide"
         onRequestClose={() => setCategoryModalVisible(false)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            padding: 20,
-            maxHeight: '70%'
-          }}>
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setCategoryModalVisible(false)}
+        >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#fff',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+              maxHeight: '70%'
+            }}
+          >
             <View style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
@@ -482,79 +527,10 @@ export default function AddProduct() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
-      {/* Size & Stock Modal */}
-      <Modal
-        visible={sizeStockModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSizeStockModalVisible(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            padding: 20
-          }}>
-            <View style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 16
-            }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#333' }}>
-                Set Stock for Each Size
-              </Text>
-              <TouchableOpacity onPress={() => setSizeStockModalVisible(false)}>
-                <Feather name="x" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView>
-              {form.sizes.map((size) => (
-                <View key={size} style={{ marginBottom: 16 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 }}>
-                    Size {size}
-                  </Text>
-                  <TextInput
-                    placeholder="Enter quantity"
-                    value={tempStock[size]}
-                    onChangeText={(text) => setTempStock({ ...tempStock, [size]: text })}
-                    keyboardType="numeric"
-                    style={{
-                      backgroundColor: '#f9f9f9',
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      borderRadius: 10,
-                      padding: 12,
-                      fontSize: 14
-                    }}
-                  />
-                </View>
-              ))}
-            </ScrollView>
-
-            <TouchableOpacity
-              onPress={handleSaveSizeStock}
-              style={{
-                backgroundColor: '#8E6652',
-                padding: 14,
-                borderRadius: 10,
-                alignItems: 'center',
-                marginTop: 10
-              }}
-            >
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>
-                Save Stock
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

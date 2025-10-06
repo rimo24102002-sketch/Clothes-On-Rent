@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, FlatList, ScrollView, Alert } from "react
 import { useSelector } from "react-redux";
 import { listDeliveriesBySeller, updateDelivery } from "../Helper/firebaseHelper";
 import { Feather } from "@expo/vector-icons";
+import StandardHeader from '../Components/StandardHeader';
 
-export default function DeliveryManagement() {
+export default function DeliveryManagement({ navigation }) {
   const user = useSelector((s) => s.home.user);
   const sellerId = user?.sellerId || user?.uid || "";
   const [deliveries, setDeliveries] = useState([]);
@@ -83,8 +84,12 @@ export default function DeliveryManagement() {
   );
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16, color: "#8E6652" }}>Delivery Management</Text>
+    <View style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
+      <StandardHeader 
+        title="Delivery Management" 
+        navigation={navigation} 
+      />
+      <View style={{ flex: 1, padding: 16 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         {["All", "Scheduled", "In Transit", "Delivered", "Failed"].map((status) => (
           <TouchableOpacity key={status} onPress={() => setFilter(status)} style={{ backgroundColor: filter === status ? "#8E6652" : "#E5E8E8", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, marginRight: 8, alignSelf: "flex-start" }}>
@@ -93,6 +98,7 @@ export default function DeliveryManagement() {
         ))}
       </ScrollView>
       <FlatList data={filteredDeliveries} renderItem={renderDelivery} keyExtractor={(d) => d.id} ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 40 }}>No deliveries found.</Text>} />
+      </View>
     </View>
   );
 }
