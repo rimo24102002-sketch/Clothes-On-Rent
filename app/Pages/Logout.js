@@ -2,8 +2,8 @@ import { Feather, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../Helper/firebaseHelper';
-import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
+import { logout, customerLogout } from '../Helper/firebaseHelper';
+import { setRole, setUser, clearUser } from '../redux/Slices/HomeDataSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -11,11 +11,18 @@ export default function Logout({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
   const user = useSelector(state => state.home.user);
+  const role = useSelector(state => state.home.role);
+  
+  // Determine if user is customer or seller
+  // Since we're forcing customer mode in _layout.js, always treat as customer
+  const isCustomer = true; // Force customer mode for now
+  const userType = 'Customer';
+  const userTypeDisplay = 'customer';
 
   const handleLogout = () => {
     Alert.alert(
       'Confirm Logout',
-      `Are you sure you want to logout, ${user?.name || 'User'}?`,
+      `Are you sure you want to logout from your ${userTypeDisplay} account?`,
       [
         { 
           text: 'Stay Logged In', 
@@ -28,18 +35,17 @@ export default function Logout({ navigation }) {
           onPress: async () => {
             setIsLoading(true);
             try {
-              // Firebase logout
-              await logout();
+              // Use appropriate logout function based on user type
+              if (isCustomer) {
+                await customerLogout();
+              } else {
+                await logout();
+              }
               
               // Clear Redux state
-              dispatch(setUser({}));
-              dispatch(setRole(''));
+              dispatch(clearUser());
               
-              // Navigate to login page
-              // navigation.reset({
-              //   index: 0,
-              //   routes: [{ name: 'Login' }],
-              // });
+              Alert.alert('Success', `You have been logged out from your ${userTypeDisplay} account successfully.`);
               
             } catch (error) {
               console.error('Logout error:', error);
@@ -58,11 +64,14 @@ export default function Logout({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#e9ecef', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
-       <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#8E6652' }}>Logout</Text>
-        <View style={{ width: 40 }} />
+      <View style={{ height: 80, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: '#8E6652' }}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Feather name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: '#fff' }}>Logout</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 40, alignItems: 'center' }}>
@@ -81,9 +90,9 @@ export default function Logout({ navigation }) {
             </Text>
           </View>
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 4 }}>{user?.name || 'User'}</Text>
-            <Text style={{ fontSize: 14, color: '#666', marginBottom: 2 }}>{user?.email || 'user@example.com'}</Text>
-            <Text style={{ fontSize: 12, color: '#8E6652', fontWeight: '600' }}>{user?.role || 'User'}</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 4 }}>{user?.name || userType}</Text>
+            <Text style={{ fontSize: 14, color: '#666', marginBottom: 2 }}>{user?.email || `${userTypeDisplay}@example.com`}</Text>
+            <Text style={{ fontSize: 12, color: '#8E6652', fontWeight: '600' }}>{userType}</Text>
           </View>
         </View>
 

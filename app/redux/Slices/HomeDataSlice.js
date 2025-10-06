@@ -23,6 +23,12 @@ const homeSlice = createSlice({
         setLoading: (state, action) => {
             state.loading = action.payload;
         },
+        clearUser: (state) => {
+            state.user = {};
+            state.name = "";
+            state.role = "";
+            state.loading = false;
+        },
     },
 });
 
@@ -30,6 +36,7 @@ export const {
     setUser,
     setName,
     setRole,
-    setLoading
+    setLoading,
+    clearUser
 } = homeSlice.actions;
 export default homeSlice.reducer;

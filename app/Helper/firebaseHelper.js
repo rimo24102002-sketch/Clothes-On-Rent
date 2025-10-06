@@ -1,6 +1,6 @@
 // firestoreService.js
 import { createUserWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, updatePassword } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 
 //--------------------------------
@@ -1048,6 +1048,625 @@ export const uploadImageToCloudinary = async (imageUri) => {
         }
     } catch (error) {
         console.error('Error uploading image to Cloudinary:', error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Customer Profile Functions
+//--------------------------------
+
+// ✅ Get Customer Profile
+export const getCustomerProfile = async (customerId) => {
+    try {
+        const docRef = doc(db, "customers", customerId);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() };
+        } else {
+            // Return default customer profile if not found
+            return {
+                id: customerId,
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                address: "",
+                gender: "",
+                profileImageUrl: null,
+                createdAt: new Date().toISOString()
+            };
+        }
+    } catch (error) {
+        console.error("Error getting customer profile:", error);
+        throw error;
+    }
+};
+
+// ✅ Update Customer Profile
+export const updateCustomerProfile = async (customerId, profileData) => {
+    try {
+        const docRef = doc(db, "customers", customerId);
+        const updateData = {
+            ...profileData,
+            updatedAt: new Date().toISOString()
+        };
+        
+        await setDoc(docRef, updateData, { merge: true });
+        console.log("Customer profile updated successfully");
+        return updateData;
+    } catch (error) {
+        console.error("Error updating customer profile:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Customer Notification Settings
+export const getCustomerNotificationSettings = async (customerId) => {
+    try {
+        const docRef = doc(db, "customer_notification_settings", customerId);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            return docSnap.data();
+        } else {
+            // Return default settings for new customers
+            const defaultSettings = {
+                orders: true,
+                reminders: true,
+                reviews: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Create default settings
+            await setDoc(docRef, defaultSettings);
+            return defaultSettings;
+        }
+    } catch (error) {
+        console.error("Error getting customer notification settings:", error);
+        throw error;
+    }
+};
+
+// ✅ Update Customer Notification Settings
+export const updateCustomerNotificationSettings = async (customerId, settings) => {
+    try {
+        const docRef = doc(db, "customer_notification_settings", customerId);
+        await updateDoc(docRef, {
+            ...settings,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Customer notification settings updated successfully");
+    } catch (error) {
+        console.error("Error updating customer notification settings:", error);
+        throw error;
+    }
+};
+
+// ✅ Send Customer Complaint
+export const sendCustomerComplaint = async (complaintData) => {
+    try {
+        const complaint = {
+            ...complaintData,
+            status: "pending",
+            adminResponse: null,
+            createdAt: new Date().toISOString(),
+            timestamp: Date.now()
+        };
+        
+        const docRef = await addDoc(collection(db, "customer_complaints"), complaint);
+        console.log("Customer complaint sent successfully");
+        return docRef.id;
+    } catch (error) {
+        console.error("Error sending customer complaint:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Customer Complaints
+export const getCustomerComplaints = async (customerId) => {
+    try {
+        const q = query(
+            collection(db, "customer_complaints"), 
+            where("customerId", "==", customerId)
+        );
+        const querySnapshot = await getDocs(q);
+        const complaints = [];
+        
+        querySnapshot.forEach((doc) => {
+            complaints.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return complaints.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    } catch (error) {
+        console.error("Error getting customer complaints:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Customer Reviews Functions
+//--------------------------------
+
+// ✅ Submit Customer Review
+export const submitCustomerReview = async (reviewData) => {
+    try {
+        const review = {
+            ...reviewData,
+            createdAt: new Date().toISOString(),
+            timestamp: Date.now(),
+            helpful: 0, // Number of people who found this review helpful
+            reported: false,
+            verified: true // Assuming customer purchased the item
+        };
+        
+        const docRef = await addDoc(collection(db, "customer_reviews"), review);
+        console.log("Customer review submitted successfully");
+        return docRef.id;
+    } catch (error) {
+        console.error("Error submitting customer review:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Customer Reviews (reviews written by a specific customer)
+export const getCustomerReviews = async (customerId) => {
+    try {
+        const q = query(
+            collection(db, "customer_reviews"), 
+            where("customerId", "==", customerId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const reviews = [];
+        
+        querySnapshot.forEach((doc) => {
+            reviews.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return reviews;
+    } catch (error) {
+        console.error("Error getting customer reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Product Reviews (all reviews for a specific product)
+export const getProductReviews = async (productId) => {
+    try {
+        const q = query(
+            collection(db, "customer_reviews"), 
+            where("productId", "==", productId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const reviews = [];
+        
+        querySnapshot.forEach((doc) => {
+            reviews.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return reviews;
+    } catch (error) {
+        console.error("Error getting product reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Update Review (edit existing review)
+export const updateCustomerReview = async (reviewId, updateData) => {
+    try {
+        const docRef = doc(db, "customer_reviews", reviewId);
+        await updateDoc(docRef, {
+            ...updateData,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Customer review updated successfully");
+    } catch (error) {
+        console.error("Error updating customer review:", error);
+        throw error;
+    }
+};
+
+// ✅ Delete Review
+export const deleteCustomerReview = async (reviewId) => {
+    try {
+        const docRef = doc(db, "customer_reviews", reviewId);
+        await deleteDoc(docRef);
+        console.log("Customer review deleted successfully");
+    } catch (error) {
+        console.error("Error deleting customer review:", error);
+        throw error;
+    }
+};
+
+// ✅ Mark Review as Helpful
+export const markReviewHelpful = async (reviewId) => {
+    try {
+        const docRef = doc(db, "customer_reviews", reviewId);
+        await updateDoc(docRef, {
+            helpful: increment(1)
+        });
+        console.log("Review marked as helpful");
+    } catch (error) {
+        console.error("Error marking review as helpful:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Seller Reviews (reviews for products by a specific seller)
+export const getSellerProductReviews = async (sellerId) => {
+    try {
+        const q = query(
+            collection(db, "customer_reviews"), 
+            where("sellerId", "==", sellerId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const reviews = [];
+        
+        querySnapshot.forEach((doc) => {
+            reviews.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return reviews;
+    } catch (error) {
+        console.error("Error getting seller product reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Add Seller Response to Review
+export const addSellerResponseToReview = async (reviewId, response, sellerId) => {
+    try {
+        const docRef = doc(db, "customer_reviews", reviewId);
+        await updateDoc(docRef, {
+            sellerResponse: {
+                message: response,
+                sellerId: sellerId,
+                respondedAt: new Date().toISOString(),
+                timestamp: Date.now()
+            }
+        });
+        console.log("Seller response added to review");
+    } catch (error) {
+        console.error("Error adding seller response to review:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Order Management Functions
+//--------------------------------
+
+// ✅ Create Customer Order (Requires Seller Approval)
+export const createCustomerOrder = async (orderData) => {
+    try {
+        const order = {
+            ...orderData,
+            status: 'pending_approval', // Requires seller approval
+            createdAt: new Date().toISOString(),
+            timestamp: Date.now(),
+            approvedAt: null,
+            rejectedAt: null,
+            sellerResponse: null
+        };
+        
+        const docRef = await addDoc(collection(db, "customer_orders"), order);
+        console.log("Customer order created, waiting for seller approval");
+        return docRef.id;
+    } catch (error) {
+        console.error("Error creating customer order:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Customer Orders
+export const getCustomerOrders = async (customerId) => {
+    try {
+        const q = query(
+            collection(db, "customer_orders"), 
+            where("customerId", "==", customerId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const orders = [];
+        
+        querySnapshot.forEach((doc) => {
+            orders.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return orders;
+    } catch (error) {
+        console.error("Error getting customer orders:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Seller Orders (For Approval)
+export const getSellerOrders = async (sellerId) => {
+    try {
+        const q = query(
+            collection(db, "customer_orders"), 
+            where("sellerId", "==", sellerId),
+            orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const orders = [];
+        
+        querySnapshot.forEach((doc) => {
+            orders.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return orders;
+    } catch (error) {
+        console.error("Error getting seller orders:", error);
+        throw error;
+    }
+};
+
+// ✅ Approve Order (Seller Action)
+export const approveOrder = async (orderId, sellerId) => {
+    try {
+        const docRef = doc(db, "customer_orders", orderId);
+        await updateDoc(docRef, {
+            status: 'approved',
+            approvedAt: new Date().toISOString(),
+            approvedBy: sellerId,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Order approved successfully");
+    } catch (error) {
+        console.error("Error approving order:", error);
+        throw error;
+    }
+};
+
+// ✅ Reject Order (Seller Action)
+export const rejectOrder = async (orderId, sellerId, reason = '') => {
+    try {
+        const docRef = doc(db, "customer_orders", orderId);
+        await updateDoc(docRef, {
+            status: 'rejected',
+            rejectedAt: new Date().toISOString(),
+            rejectedBy: sellerId,
+            rejectionReason: reason,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Order rejected successfully");
+    } catch (error) {
+        console.error("Error rejecting order:", error);
+        throw error;
+    }
+};
+
+// ✅ Update Order Status (After Approval)
+export const updateOrderStatus = async (orderId, status) => {
+    try {
+        const docRef = doc(db, "customer_orders", orderId);
+        await updateDoc(docRef, {
+            status: status,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Order status updated successfully");
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Customer Account Functions
+//--------------------------------
+
+// ✅ Delete Customer Account
+export const deleteCustomerAccount = async (customerId) => {
+    try {
+        // Delete customer profile
+        const customerDocRef = doc(db, "customers", customerId);
+        await deleteDoc(customerDocRef);
+        
+        // Delete customer notification settings
+        const notificationDocRef = doc(db, "customer_notification_settings", customerId);
+        await deleteDoc(notificationDocRef);
+        
+        // Delete customer reviews
+        const reviewsQuery = query(
+            collection(db, "customer_reviews"), 
+            where("customerId", "==", customerId)
+        );
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+        const reviewDeletePromises = reviewsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(reviewDeletePromises);
+        
+        // Delete customer orders
+        const ordersQuery = query(
+            collection(db, "customer_orders"), 
+            where("customerId", "==", customerId)
+        );
+        const ordersSnapshot = await getDocs(ordersQuery);
+        const orderDeletePromises = ordersSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(orderDeletePromises);
+        
+        // Delete customer complaints
+        const complaintsQuery = query(
+            collection(db, "customer_complaints"), 
+            where("customerId", "==", customerId)
+        );
+        const complaintsSnapshot = await getDocs(complaintsQuery);
+        const complaintDeletePromises = complaintsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(complaintDeletePromises);
+        
+        console.log("Customer account and all related data deleted successfully");
+    } catch (error) {
+        console.error("Error deleting customer account:", error);
+        throw error;
+    }
+};
+
+// ✅ Customer Logout (Clear local data)
+export const customerLogout = async () => {
+    try {
+        await signOut(auth);
+        console.log("Customer logged out successfully");
+    } catch (error) {
+        console.error("Error during customer logout:", error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Product & Category Functions
+//--------------------------------
+
+// ✅ Get All Categories
+export const getCategories = async () => {
+    try {
+        const categoriesRef = collection(db, "categories");
+        const snapshot = await getDocs(categoriesRef);
+        
+        const categories = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Categories fetched successfully:", categories.length);
+        return categories;
+    } catch (error) {
+        console.error("Error fetching categories:", error);
+        throw error;
+    }
+};
+
+// ✅ Get All Products
+export const getAllProducts = async () => {
+    try {
+        const productsRef = collection(db, "products");
+        const snapshot = await getDocs(productsRef);
+        
+        const products = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Products fetched successfully:", products.length);
+        return products;
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Products by Category
+export const getProductsByCategory = async (categoryId) => {
+    try {
+        const productsRef = collection(db, "products");
+        const q = query(productsRef, where("categoryId", "==", categoryId));
+        const snapshot = await getDocs(q);
+        
+        const products = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log(`Products for category ${categoryId} fetched:`, products.length);
+        return products;
+    } catch (error) {
+        console.error("Error fetching products by category:", error);
+        throw error;
+    }
+};
+
+// ✅ Add Product to Cart
+export const addToCart = async (customerId, product, selectedSize, quantity = 1) => {
+    try {
+        const cartRef = collection(db, "cart");
+        
+        // Check if item already exists in cart
+        const existingItemQuery = query(
+            cartRef, 
+            where("customerId", "==", customerId),
+            where("productId", "==", product.id),
+            where("selectedSize", "==", selectedSize)
+        );
+        
+        const existingItemSnapshot = await getDocs(existingItemQuery);
+        
+        if (!existingItemSnapshot.empty) {
+            // Update quantity if item exists
+            const existingDoc = existingItemSnapshot.docs[0];
+            const newQuantity = existingDoc.data().quantity + quantity;
+            
+            await updateDoc(existingDoc.ref, {
+                quantity: newQuantity,
+                updatedAt: new Date().toISOString()
+            });
+            
+            console.log("Cart item quantity updated");
+        } else {
+            // Add new item to cart
+            const cartItem = {
+                customerId,
+                productId: product.id,
+                productName: product.name,
+                productImage: product.images?.[0] || '',
+                price: product.price,
+                selectedSize,
+                quantity,
+                sellerId: product.sellerId,
+                sellerName: product.sellerName || '',
+                addedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            await addDoc(cartRef, cartItem);
+            console.log("Product added to cart successfully");
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error adding to cart:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Cart Items for Customer
+export const getCartItems = async (customerId) => {
+    try {
+        const cartRef = collection(db, "cart");
+        const q = query(cartRef, where("customerId", "==", customerId));
+        const snapshot = await getDocs(q);
+        
+        const cartItems = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Cart items fetched:", cartItems.length);
+        return cartItems;
+    } catch (error) {
+        console.error("Error fetching cart items:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Slider Images
+export const getSliderImages = async () => {
+    try {
+        const slidersRef = collection(db, "sliders");
+        const q = query(slidersRef, orderBy("order", "asc"));
+        const snapshot = await getDocs(q);
+        
+        const sliders = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Slider images fetched successfully:", sliders.length);
+        return sliders;
+    } catch (error) {
+        console.error("Error fetching slider images:", error);
         throw error;
     }
 };

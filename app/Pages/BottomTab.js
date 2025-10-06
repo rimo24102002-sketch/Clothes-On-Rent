@@ -12,11 +12,61 @@ const Tab = createBottomTabNavigator();
 
 export default function BottomTab() {
     return (
-        <Tab.Navigator >
-            <Tab.Screen name="Home" component={HomeStack} options={{ tabBarIcon: ({ color }) => <Icon name="home-outline" size={30} color="black" /> }} />
-            <Tab.Screen name="Cart" component={Cart} options={{ tabBarIcon: ({ color }) => <Icon name="cart-outline" size={30} color="black" /> }} />
-            <Tab.Screen name="Profile" component={EProfile} options={{ tabBarIcon: ({ color }) => <Icon name="person-outline" size={30} color="black" /> }} />
-            <Tab.Screen name="Review" component={CReview} options={{ tabBarIcon: ({ color }) => <MaterialIcons name="rate-review" size={26} color="black" /> }} />
+        <Tab.Navigator 
+            screenOptions={{
+                tabBarActiveTintColor: '#8E6652',
+                tabBarInactiveTintColor: '#999',
+                tabBarStyle: {
+                    backgroundColor: '#fff',
+                    borderTopWidth: 1,
+                    borderTopColor: '#f0f0f0',
+                    height: 80,
+                    paddingBottom: 12,
+                    paddingTop: 12
+                },
+                headerShown: false
+            }}
+        >
+            <Tab.Screen 
+                name="Home" 
+                component={HomeStack} 
+                options={{ 
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon name="home-outline" size={30} color={focused ? '#8E6652' : '#999'} />
+                    ),
+                    tabBarLabel: 'Home'
+                }} 
+            />
+            <Tab.Screen 
+                name="Cart" 
+                component={Cart} 
+                options={{ 
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon name="cart-outline" size={30} color={focused ? '#8E6652' : '#999'} />
+                    ),
+                    tabBarLabel: 'Cart'
+                }} 
+            />
+            <Tab.Screen 
+                name="Profile" 
+                component={EProfile} 
+                options={{ 
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon name="person-outline" size={30} color={focused ? '#8E6652' : '#999'} />
+                    ),
+                    tabBarLabel: 'Profile'
+                }} 
+            />
+            <Tab.Screen 
+                name="Review" 
+                component={CReview} 
+                options={{ 
+                    tabBarIcon: ({ color, focused }) => (
+                        <MaterialIcons name="rate-review" size={26} color={focused ? '#8E6652' : '#999'} />
+                    ),
+                    tabBarLabel: 'Reviews'
+                }} 
+            />
         </Tab.Navigator>
     );
 }

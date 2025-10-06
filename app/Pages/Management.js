@@ -87,6 +87,16 @@ export default function Management({ navigation }) {
             <Feather name="chevron-right" size={20} color="#8E6652" />
           </TouchableOpacity>
 
+          {/* Order Approvals */}
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate("OrderApproval")}
+          >
+            <Ionicons name="checkmark-circle-outline" size={22} color="#8E6652" />
+            <Text style={styles.actionText}>Order Approvals</Text>
+            <Feather name="chevron-right" size={20} color="#8E6652" />
+          </TouchableOpacity>
+
           {/* Orders */}
           <TouchableOpacity
             style={styles.actionBtn}

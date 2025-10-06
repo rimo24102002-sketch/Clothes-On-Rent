@@ -20,6 +20,7 @@ import Logout from './Pages/Logout';
 import Management from './Pages/Management';
 import Notification from './Pages/Notification';
 import NotificationSettings from './Pages/NotificationSettings';
+import OrderApproval from './Pages/OrderApproval';
 import OrderPayment from './Pages/OrderPayment';
 import Password from './Pages/Password';
 import PendingApproval from './Pages/PendingApproval';
@@ -40,6 +41,8 @@ import Cancel from './Pages/Cancel';
 import Cart from './Pages/Cart';
 import Checkout from './Pages/Checkout';
 import Complain from './Pages/Complain';
+import CustomerHelpCenter from './Pages/CustomerHelpCenter';
+import CustomerNotificationSettings from './Pages/CustomerNotificationSettings';
 import Delivered from './Pages/Delivered';
 import Detail from './Pages/Detail';
 import EProfile from './Pages/Eprofile';
@@ -92,6 +95,7 @@ const SellerStack = () => {
     <Stack.Screen name="Notification" component={Notification} />
     <Stack.Screen name="Management" component={Management}/>
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
+    <Stack.Screen name="OrderApproval" component={OrderApproval} options={{ headerShown: false }} />
     <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
   </Stack.Navigator>
   );
@@ -119,7 +123,8 @@ const PendingStack = () => {
 
 const CustomerStack = () => (
   <Stack.Navigator initialRouteName="BottomTab">
-    <Stack.Screen name="Profiles" component={Profiles} />
+    <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
+    <Stack.Screen name="Profiles" component={Profiles} options={{ headerShown: false }} />
     <Stack.Screen name="EProfile" component={EProfile} />
     <Stack.Screen name="CReview" component={CReview} />
     <Stack.Screen name="OrderDetail" component={OrderDetail} />
@@ -128,17 +133,20 @@ const CustomerStack = () => (
     <Stack.Screen name="Cart" component={Cart} />
     <Stack.Screen name="Checkout" component={Checkout} />
     <Stack.Screen name="Complain" component={Complain} />
+    <Stack.Screen name="CustomerHelpCenter" component={CustomerHelpCenter} options={{ headerShown: false }} />
+    <Stack.Screen name="CustomerNotificationSettings" component={CustomerNotificationSettings} options={{ headerShown: false }} />
     <Stack.Screen name="Delivered" component={Delivered} />
     <Stack.Screen name="Detail" component={Detail} />
     <Stack.Screen name="Home2" component={Home2} />
-    <Stack.Screen name="VTO" component={VTO} />
-    <Stack.Screen name="Homestack" component={Homestack} />
     <Stack.Screen name="Mhndi" component={Mhndi} />
     <Stack.Screen name="Payment" component={Payment} />
     <Stack.Screen name="Order" component={Order} />
     <Stack.Screen name="Index" component={Index} />
-    <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
-
+    <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
+    <Stack.Screen name="Password" component={Password} options={{ headerShown: false }} />
+    <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+    <Stack.Screen name="Logout" component={Logout} options={{ headerShown: false }} />
+    <Stack.Screen name="Delete" component={Delete} options={{ headerShown: false }} />
   </Stack.Navigator>
 );
 

@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { deleteAccount } from '../Helper/firebaseHelper';
-import { useDispatch } from 'react-redux';
-import { setUser, setRole } from '../redux/Slices/HomeDataSlice';
+import { Feather } from '@expo/vector-icons';
+import { deleteAccount, deleteCustomerAccount } from '../Helper/firebaseHelper';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser, setRole, clearUser } from '../redux/Slices/HomeDataSlice';
 
 export default function DeleteAccount({navigation}) {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const user = useSelector(state => state.home.user);
+  const role = useSelector(state => state.home.role);
+  
+  // Determine if user is customer or seller
+  // Since we're forcing customer mode in _layout.js, always treat as customer
+  const isCustomer = true; // Force customer mode for now
+  const userType = 'Customer';
+  const userTypeDisplay = 'customer';
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -40,15 +49,19 @@ export default function DeleteAccount({navigation}) {
   const performAccountDeletion = async () => {
     setIsLoading(true);
     try {
-      await deleteAccount();
+      // Use appropriate delete function based on user type
+      if (isCustomer) {
+        await deleteCustomerAccount(user?.uid);
+      } else {
+        await deleteAccount();
+      }
       
       // Clear Redux state
-      dispatch(setUser({}));
-      dispatch(setRole(''));
+      dispatch(clearUser());
       
       Alert.alert(
         'Account Deleted', 
-        'Your account has been permanently deleted. We\'re sorry to see you go.',
+        `Your ${userTypeDisplay} account and all associated data have been permanently deleted.`,
         [
           {
             text: 'OK',
@@ -84,8 +97,17 @@ export default function DeleteAccount({navigation}) {
   };
 
   return (
-    <SafeAreaView style={{flex:1,backgroundColor:'#fff',padding:20}}>
-      <Text style={{fontSize:20,fontWeight:'bold',color:'black',marginBottom:20,textAlign:'center'}}>Delete Account</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
+      {/* Header */}
+      <View style={{ height: 80, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: '#8E6652' }}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Feather name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: '#fff' }}>Delete Account</Text>
+        <View style={{ width: 24 }} />
+      </View>
+      
+      <View style={{ flex: 1, padding: 20 }}>
       
       <View style={{backgroundColor:'#ffebee',padding:15,borderRadius:8,marginBottom:20,borderLeftWidth:4,borderLeftColor:'#f44336'}}>
         <Text style={{fontSize:16,color:'#d32f2f',fontWeight:'600',marginBottom:5}}>⚠️ Warning</Text>
@@ -99,6 +121,7 @@ export default function DeleteAccount({navigation}) {
       <TouchableOpacity style={{backgroundColor:'#8E6652',padding:15,borderRadius:8,alignItems:'center'}} onPress={handleCancel} disabled={isLoading}>
         <Text style={{color:'white',fontSize:16,fontWeight:'bold'}}>Keep My Account</Text>
       </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }

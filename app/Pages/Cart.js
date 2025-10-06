@@ -1,14 +1,18 @@
-import { View, Text, ScrollView, Image, TouchableOpacity,TextInput } from 'react-native'
+import { View, Text, ScrollView, Image, TouchableOpacity, TextInput, SafeAreaView } from 'react-native'
 import React from 'react'
 import Ionicons from "react-native-vector-icons/Ionicons";
+import StandardHeader from '../Components/StandardHeader';
 
 const Cart = ({navigation}) => {
     return (
-        <ScrollView style={{ backgroundColor: "#F3D5C6", height: '1000%' }}>
-            <View style={{ width: '100%', height: 380 }}>
-                <View style={{ alignItems: "center", padding: 15, justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 18, fontWeight: "bold", marginLeft: 15 }}>Your Cart</Text>
-                </View>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#F1DCD1" }}>
+            <StandardHeader 
+                title="Your Cart" 
+                navigation={navigation}
+                showBackButton={false}
+            />
+            <ScrollView style={{ backgroundColor: "#F3D5C6", flex: 1 }}>
+                <View style={{ width: '100%', paddingTop: 20 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3D5C6", padding: 10 }}>
                     <Image source={require('./Bold.png')} style={{ width: 70, height: 90, borderRadius: 8, marginRight: 12 }} />
                     <View style={{ backgroundColor: "#F3D5C6", width: '60%' }}>
@@ -92,11 +96,8 @@ const Cart = ({navigation}) => {
                     </TouchableOpacity>
                 </View>
             </View>
-
-
-
-
         </ScrollView>
+        </SafeAreaView>
     )
 }
 
