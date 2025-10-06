@@ -32,31 +32,31 @@ const Home2 = ({ navigation }) => {
         loadData();
     }, []);
 
-    // Default categories with icons
+    // Default categories with local images
     const defaultCategories = [
         {
             id: 'mehndi',
             name: 'Mehndi',
             icon: 'flower-outline',
-            image: null
+            image: require("./pic.png")
         },
         {
             id: 'barat',
             name: 'Barat',
             icon: 'diamond-outline',
-            image: null
+            image: require("./pic2.png")
         },
         {
             id: 'walima',
             name: 'Walima',
             icon: 'heart-outline',
-            image: null
+            image: require("./pic3.png")
         },
         {
             id: 'festive',
             name: 'Festive',
             icon: 'star-outline',
-            image: null
+            image: require("./pic4.png")
         }
     ];
 
@@ -322,13 +322,22 @@ const Home2 = ({ navigation }) => {
                                             shadowRadius: 4,
                                         }}
                                     >
-                                        {category.image ? (
+                                        {category.image && typeof category.image === 'string' ? (
+                                            // Firebase image (URL string)
                                             <Image 
                                                 source={{ uri: category.image }} 
                                                 style={{ width: 60, height: 60, borderRadius: 30 }} 
                                                 resizeMode="cover"
                                             />
+                                        ) : category.image ? (
+                                            // Local image (require object)
+                                            <Image 
+                                                source={category.image} 
+                                                style={{ width: 60, height: 60, borderRadius: 30 }} 
+                                                resizeMode="cover"
+                                            />
                                         ) : (
+                                            // Fallback icon
                                             <Icon 
                                                 name={category.icon || "shirt-outline"} 
                                                 size={30} 

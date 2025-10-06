@@ -1441,20 +1441,6 @@ export const rejectOrder = async (orderId, sellerId, reason = '') => {
     }
 };
 
-// ✅ Update Order Status (After Approval)
-export const updateOrderStatus = async (orderId, status) => {
-    try {
-        const docRef = doc(db, "customer_orders", orderId);
-        await updateDoc(docRef, {
-            status: status,
-            updatedAt: new Date().toISOString()
-        });
-        console.log("Order status updated successfully");
-    } catch (error) {
-        console.error("Error updating order status:", error);
-        throw error;
-    }
-};
 
 //--------------------------------
 // 🔹 Customer Account Functions
@@ -1539,30 +1525,14 @@ export const getCategories = async () => {
     }
 };
 
-// ✅ Get All Products
+// ✅ Get All Products (Only Approved)
 export const getAllProducts = async () => {
     try {
         const productsRef = collection(db, "products");
-        const snapshot = await getDocs(productsRef);
-        
-        const products = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-        
-        console.log("Products fetched successfully:", products.length);
-        return products;
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        throw error;
-    }
-};
-
-// ✅ Get Products by Category
-export const getProductsByCategory = async (categoryId) => {
-    try {
-        const productsRef = collection(db, "products");
-        const q = query(productsRef, where("categoryId", "==", categoryId));
+        const q = query(
+            productsRef, 
+            where("status", "==", "approved") // Only approved products for customers
+        );
         const snapshot = await getDocs(q);
         
         const products = snapshot.docs.map(doc => ({
@@ -1570,11 +1540,61 @@ export const getProductsByCategory = async (categoryId) => {
             ...doc.data()
         }));
         
-        console.log(`Products for category ${categoryId} fetched:`, products.length);
+        console.log("Approved products fetched successfully:", products.length);
         return products;
     } catch (error) {
-        console.error("Error fetching products by category:", error);
-        throw error;
+        console.error("Error fetching approved products:", error);
+        // Fallback: get all products if status filter fails
+        try {
+            const allProductsRef = collection(db, "products");
+            const fallbackSnapshot = await getDocs(allProductsRef);
+            const allProducts = fallbackSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            console.log("Fallback: All products fetched:", allProducts.length);
+            return allProducts;
+        } catch (fallbackError) {
+            console.error("Fallback query also failed:", fallbackError);
+            throw fallbackError;
+        }
+    }
+};
+
+// ✅ Get Products by Category (Only Approved)
+export const getProductsByCategory = async (categoryId) => {
+    try {
+        const productsRef = collection(db, "products");
+        const q = query(
+            productsRef, 
+            where("categoryId", "==", categoryId),
+            where("status", "==", "approved") // Only approved products for customers
+        );
+        const snapshot = await getDocs(q);
+        
+        const products = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log(`Approved products for category ${categoryId} fetched:`, products.length);
+        return products;
+    } catch (error) {
+        console.error("Error fetching approved products by category:", error);
+        // Fallback: get all products for this category if status filter fails
+        try {
+            const fallbackQuery = query(productsRef, where("categoryId", "==", categoryId));
+            const fallbackSnapshot = await getDocs(fallbackQuery);
+            const fallbackProducts = fallbackSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            console.log(`Fallback: All products for category ${categoryId}:`, fallbackProducts.length);
+            return fallbackProducts;
+        } catch (fallbackError) {
+            console.error("Fallback category query failed:", fallbackError);
+            throw fallbackError;
+        }
     }
 };
 
@@ -1667,6 +1687,219 @@ export const getSliderImages = async () => {
         return sliders;
     } catch (error) {
         console.error("Error fetching slider images:", error);
+        throw error;
+    }
+};
+
+// ✅ Update Cart Item
+export const updateCartItem = async (cartItemId, updates) => {
+    try {
+        const cartItemRef = doc(db, "cart", cartItemId);
+        await updateDoc(cartItemRef, {
+            ...updates,
+            updatedAt: new Date().toISOString()
+        });
+        
+        console.log("Cart item updated successfully");
+        return true;
+    } catch (error) {
+        console.error("Error updating cart item:", error);
+        throw error;
+    }
+};
+
+// ✅ Remove Item from Cart
+export const removeFromCart = async (cartItemId) => {
+    try {
+        const cartItemRef = doc(db, "cart", cartItemId);
+        await deleteDoc(cartItemRef);
+        
+        console.log("Item removed from cart successfully");
+        return true;
+    } catch (error) {
+        console.error("Error removing item from cart:", error);
+        throw error;
+    }
+};
+
+// ✅ Place Order (Requires Seller Approval)
+export const placeOrder = async (orderData) => {
+    try {
+        const ordersRef = collection(db, "orders");
+        const docRef = await addDoc(ordersRef, {
+            ...orderData,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        
+        // Clear customer's cart after placing order
+        const cartRef = collection(db, "cart");
+        const cartQuery = query(cartRef, where("customerId", "==", orderData.customerId));
+        const cartSnapshot = await getDocs(cartQuery);
+        
+        const deletePromises = cartSnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        console.log("Order placed successfully:", docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error placing order:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Orders for Seller Approval
+export const getOrdersForSeller = async (sellerId) => {
+    try {
+        const ordersRef = collection(db, "orders");
+        const q = query(
+            ordersRef,
+            where("items", "array-contains-any", 
+                [{ sellerId: sellerId }]
+            ),
+            orderBy("createdAt", "desc")
+        );
+        const snapshot = await getDocs(q);
+        
+        const orders = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Seller orders fetched:", orders.length);
+        return orders;
+    } catch (error) {
+        console.error("Error fetching seller orders:", error);
+        // Fallback query without array-contains-any
+        try {
+            const ordersRef = collection(db, "orders");
+            const q = query(ordersRef, orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
+            
+            const allOrders = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            // Filter orders that contain items from this seller
+            const sellerOrders = allOrders.filter(order => 
+                order.items && order.items.some(item => item.sellerId === sellerId)
+            );
+            
+            console.log("Seller orders fetched (fallback):", sellerOrders.length);
+            return sellerOrders;
+        } catch (fallbackError) {
+            console.error("Error in fallback query:", fallbackError);
+            throw fallbackError;
+        }
+    }
+};
+
+// ✅ Update Order Status (Seller Approval/Rejection)
+export const updateOrderStatus = async (orderId, newStatus, sellerNotes = '') => {
+    try {
+        const orderRef = doc(db, "orders", orderId);
+        const updateData = {
+            status: newStatus,
+            updatedAt: new Date().toISOString(),
+            statusUpdatedAt: new Date().toISOString()
+        };
+        
+        if (sellerNotes) {
+            updateData.sellerNotes = sellerNotes;
+        }
+        
+        await updateDoc(orderRef, updateData);
+        
+        console.log("Order status updated:", newStatus);
+        return true;
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+    }
+};
+
+// ✅ Get Customer Orders with Status
+export const getCustomerOrdersWithStatus = async (customerId) => {
+    try {
+        const ordersRef = collection(db, "orders");
+        const q = query(
+            ordersRef,
+            where("customerId", "==", customerId),
+            orderBy("createdAt", "desc")
+        );
+        const snapshot = await getDocs(q);
+        
+        const orders = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Customer orders with status fetched:", orders.length);
+        return orders;
+    } catch (error) {
+        console.error("Error fetching customer orders:", error);
+        throw error;
+    }
+};
+
+// ✅ Admin: Approve Product
+export const approveProduct = async (productId) => {
+    try {
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, {
+            status: "approved",
+            approvedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        
+        console.log("Product approved successfully:", productId);
+        return true;
+    } catch (error) {
+        console.error("Error approving product:", error);
+        throw error;
+    }
+};
+
+// ✅ Admin: Reject Product
+export const rejectProduct = async (productId, reason = '') => {
+    try {
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, {
+            status: "rejected",
+            rejectionReason: reason,
+            rejectedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        
+        console.log("Product rejected successfully:", productId);
+        return true;
+    } catch (error) {
+        console.error("Error rejecting product:", error);
+        throw error;
+    }
+};
+
+// ✅ Admin: Get Pending Products
+export const getPendingProducts = async () => {
+    try {
+        const productsRef = collection(db, "products");
+        const q = query(
+            productsRef, 
+            where("status", "==", "pending"),
+            orderBy("createdAt", "desc")
+        );
+        const snapshot = await getDocs(q);
+        
+        const products = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        
+        console.log("Pending products fetched:", products.length);
+        return products;
+    } catch (error) {
+        console.error("Error fetching pending products:", error);
         throw error;
     }
 };

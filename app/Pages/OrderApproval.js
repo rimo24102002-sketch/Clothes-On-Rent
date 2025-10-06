@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { getSellerOrders, approveOrder, rejectOrder } from "../Helper/firebaseHelper";
+import { getOrdersForSeller, updateOrderStatus } from "../Helper/firebaseHelper";
 import StandardHeader from '../Components/StandardHeader';
 
 export default function OrderApproval({ navigation }) {
@@ -26,7 +26,7 @@ export default function OrderApproval({ navigation }) {
     try {
       if (!sellerId) return;
       
-      const sellerOrders = await getSellerOrders(sellerId);
+      const sellerOrders = await getOrdersForSeller(sellerId);
       setOrders(sellerOrders);
     } catch (error) {
       console.error("Error loading seller orders:", error);
@@ -46,7 +46,7 @@ export default function OrderApproval({ navigation }) {
           text: "Approve",
           onPress: async () => {
             try {
-              await approveOrder(orderId, sellerId);
+              await updateOrderStatus(orderId, "confirmed", "Order approved by seller");
               Alert.alert("Success", "Order approved successfully!");
               loadSellerOrders();
             } catch (error) {
@@ -70,7 +70,7 @@ export default function OrderApproval({ navigation }) {
     }
 
     try {
-      await rejectOrder(selectedOrder.id, sellerId, rejectionReason.trim());
+      await updateOrderStatus(selectedOrder.id, "rejected", rejectionReason.trim());
       Alert.alert("Success", "Order rejected successfully!");
       setShowRejectModal(false);
       setRejectionReason('');
@@ -84,8 +84,11 @@ export default function OrderApproval({ navigation }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending_approval': return '#F39C12';
-      case 'approved': return '#27AE60';
+      case 'confirmed': return '#27AE60';
       case 'rejected': return '#E74C3C';
+      case 'preparing': return '#3498DB';
+      case 'ready': return '#9B59B6';
+      case 'delivered': return '#2ECC71';
       default: return '#95A5A6';
     }
   };
@@ -93,9 +96,12 @@ export default function OrderApproval({ navigation }) {
   const getStatusText = (status) => {
     switch (status) {
       case 'pending_approval': return 'Pending Approval';
-      case 'approved': return 'Approved';
+      case 'confirmed': return 'Confirmed';
       case 'rejected': return 'Rejected';
-      default: return status;
+      case 'preparing': return 'Preparing';
+      case 'ready': return 'Ready';
+      case 'delivered': return 'Delivered';
+      default: return status?.charAt(0).toUpperCase() + status?.slice(1) || 'Unknown';
     }
   };
 
@@ -103,7 +109,7 @@ export default function OrderApproval({ navigation }) {
     ? orders 
     : orders.filter(order => {
         if (activeFilter === 'Pending Approval') return order.status === 'pending_approval';
-        if (activeFilter === 'Approved') return order.status === 'approved';
+        if (activeFilter === 'Approved') return order.status === 'confirmed';
         if (activeFilter === 'Rejected') return order.status === 'rejected';
         return true;
       });
