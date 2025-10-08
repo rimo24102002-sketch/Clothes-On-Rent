@@ -297,67 +297,43 @@ export const listProductsBySeller = async (sellerId) => {
         snap.forEach(d => items.push({ id: d.id, ...d.data() }));
         return items;
     } catch (e) {
-        console.error("Error listing products:", e);
         throw e;
     }
 };
 
 //--------------------------------
-// 🔹 Product Categories
+// 🔹 Categories Services
 //--------------------------------
 
-export const PRODUCT_CATEGORIES = [
-    { 
-        id: 'CAT-001', 
-        name: 'Mehndi', 
-        description: 'Traditional Mehndi ceremony outfits',
-        color: '#E67E22' 
-    },
-    { 
-        id: 'CAT-002', 
-        name: 'Barat', 
-        description: 'Wedding ceremony dresses',
-        color: '#8E44AD' 
-    },
-    { 
-        id: 'CAT-003', 
-        name: 'Walima', 
-        description: 'Reception party attire',
-        color: '#3498DB' 
-    },
-    { 
-        id: 'CAT-004', 
-        name: 'Festival', 
-        description: 'Festival and celebration wear',
-        color: '#E74C3C' 
-    }
-];
-
-export const getProductCategories = () => PRODUCT_CATEGORIES;
-
-export const getCategoryById = (id) => PRODUCT_CATEGORIES.find(c => c.id === id);
-
-export const getCategoryByName = (name) => PRODUCT_CATEGORIES.find(c => c.name.toLowerCase() === name.toLowerCase());
-
-export const addProduct = async (sellerId, product) => {
+// ✅ Get all categories
+export const getCategories = async () => {
     try {
-        const payload = { 
-            ...product, 
-            sizes: product?.sizes || ["S","M","L"],
-            stock: product?.stock || {},
-            securityFee: Number(product?.securityFee || 0),
-            categoryId: product?.categoryId || '',
-            categoryName: product?.categoryName || '',
-            status: 'pending', // All products need admin approval
-            sellerId, 
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-        };
-        const ref = await addDoc(collection(db, "products"), payload);
-        return ref.id;
-    } catch (e) {
-        console.error("Error adding product:", e);
-        throw e;
+        const querySnapshot = await getDocs(collection(db, 'categories'));
+        const categories = [];
+        querySnapshot.forEach((doc) => {
+            categories.push({ cid: doc.id, ...doc.data() });
+        });
+        return categories;
+    } catch (error) {
+        console.error('Error getting categories:', error);
+        throw error;
+    }
+};
+
+// ✅ Get category by CID
+export const getCategoryByCid = async (cid) => {
+    try {
+        const docRef = doc(db, 'categories', cid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return { cid: docSnap.id, ...docSnap.data() };
+        } else {
+            console.log('No such category!');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting category:', error);
+        throw error;
     }
 };
 
@@ -656,156 +632,8 @@ export const getTermsOfService = async () => {
 };
 
 //--------------------------------
-// 🔹 Sample Data for Testing
-//--------------------------------
-
-// ✅ Add sample orders for testing
-export const addSampleOrders = async (sellerId) => {
-  try {
-    const sampleOrders = [
-      {
-        id: "ORD-001",
-        customer: "Ahmed Hassan",
-        address: "Block A, Gulberg III, Lahore",
-        items: ["Blue Formal Shirt", "Black Dress Pants"],
-        payment: "Rs. 2,500 (COD)",
-        status: "Pending",
-        createdAt: Date.now() - 86400000, // 1 day ago
-        sellerId: sellerId
-      },
-      {
-        id: "ORD-002", 
-        customer: "Fatima Khan",
-        address: "DHA Phase 5, Karachi",
-        items: ["Red Evening Dress", "Gold Jewelry Set"],
-        payment: "Rs. 4,200 (COD)",
-        status: "Delivered",
-        createdAt: Date.now() - 172800000, // 2 days ago
-        sellerId: sellerId
-      },
-      {
-        id: "ORD-003",
-        customer: "Ali Raza",
-        address: "F-8 Markaz, Islamabad", 
-        items: ["Wedding Sherwani", "Khussa Shoes"],
-        payment: "Rs. 6,800 (COD)",
-        status: "Pending",
-        createdAt: Date.now() - 43200000, // 12 hours ago
-        sellerId: sellerId
-      },
-      {
-        id: "ORD-004",
-        customer: "Ayesha Malik",
-        address: "Cantt Area, Rawalpindi",
-        items: ["Party Lehenga"],
-        payment: "Rs. 3,500 (COD)",
-        status: "Canceled",
-        createdAt: Date.now() - 259200000, // 3 days ago
-        sellerId: sellerId
-      }
-    ];
-
-    for (const order of sampleOrders) {
-      await addDoc(collection(db, "orders"), order);
-    }
-    
-    console.log("Sample orders added successfully!");
-    return true;
-  } catch (error) {
-    console.error("Error adding sample orders:", error);
-    throw error;
-  }
-};
-
-// ✅ Add sample deliveries for testing
-export const addSampleDeliveries = async (sellerId) => {
-  try {
-    const sampleDeliveries = [
-      {
-        id: "DEL-001",
-        orderId: "ORD-001",
-        customer: "Ahmed Hassan",
-        address: "Block A, Gulberg III, Lahore",
-        items: ["Blue Formal Shirt", "Black Dress Pants"],
-        status: "Scheduled",
-        rider: "Muhammad Usman",
-        riderPhone: "+92 300 1234567",
-        scheduledDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-        createdAt: Date.now() - 86400000,
-        sellerId: sellerId
-      },
-      {
-        id: "DEL-002",
-        orderId: "ORD-002", 
-        customer: "Fatima Khan",
-        address: "DHA Phase 5, Karachi",
-        items: ["Red Evening Dress", "Gold Jewelry Set"],
-        status: "Delivered",
-        rider: "Hassan Ali",
-        riderPhone: "+92 301 9876543",
-        scheduledDate: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-        deliveredAt: Date.now() - 43200000, // 12 hours ago
-        createdAt: Date.now() - 172800000,
-        sellerId: sellerId
-      },
-      {
-        id: "DEL-003",
-        orderId: "ORD-003",
-        customer: "Ali Raza", 
-        address: "F-8 Markaz, Islamabad",
-        items: ["Wedding Sherwani", "Khussa Shoes"],
-        status: "In Transit",
-        rider: "Tariq Mahmood",
-        riderPhone: "+92 302 5555555",
-        scheduledDate: new Date().toISOString(), // Today
-        createdAt: Date.now() - 43200000,
-        sellerId: sellerId
-      },
-      {
-        id: "DEL-004",
-        orderId: "ORD-005",
-        customer: "Sara Ahmed",
-        address: "Model Town, Lahore",
-        items: ["Bridal Dress", "Matching Dupatta"],
-        status: "Failed",
-        rider: "Imran Sheikh",
-        riderPhone: "+92 303 7777777",
-        scheduledDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-        failureReason: "Customer not available",
-        createdAt: Date.now() - 259200000,
-        sellerId: sellerId
-      }
-    ];
-
-    for (const delivery of sampleDeliveries) {
-      await addDoc(collection(db, "deliveries"), delivery);
-    }
-    
-    console.log("Sample deliveries added successfully!");
-    return true;
-  } catch (error) {
-    console.error("Error adding sample deliveries:", error);
-    throw error;
-  }
-};
-
-//--------------------------------
 // 🔹 Seller Status Management
 //--------------------------------
-
-// ✅ Get seller status by sellerId from sellers collection
-export const getSellerStatus = async (sellerId) => {
-    try {
-        const sellerDoc = await getDoc(doc(db, "sellers", sellerId));
-        if (sellerDoc.exists()) {
-            return sellerDoc.data().status || "pending";
-        }
-        return "pending";
-    } catch (error) {
-        console.error("Error getting seller status:", error);
-        throw error;
-    }
-};
 
 // ✅ Get seller data by sellerId from sellers collection
 export const getSellerData = async (sellerId) => {
@@ -819,7 +647,7 @@ export const getSellerData = async (sellerId) => {
         console.error("Error getting seller data:", error);
         throw error;
     }
-};
+}
 
 // ✅ Update seller status (approve/reject/pending)
 export const updateSellerStatus = async (sellerId, status, adminNotes = "") => {
@@ -1017,8 +845,165 @@ export const reduceStock = async (productId, size, quantity = 1) => {
 };
 
 //--------------------------------
-// 🔹 Image Upload Services
+// 🔹 Cart Management Services
 //--------------------------------
+
+// ✅ Save cart to Firebase
+export const saveCartToFirebase = async (userId, cartItems) => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            cart: cartItems,
+            cartUpdatedAt: new Date().toISOString()
+        });
+        console.log('Cart saved to Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error saving cart to Firebase:', error);
+        throw error;
+    }
+};
+
+// ✅ Load cart from Firebase
+export const loadCartFromFirebase = async (userId) => {
+    try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            return userData.cart || [];
+        }
+        return [];
+    } catch (error) {
+        console.error('Error loading cart from Firebase:', error);
+        return [];
+    }
+};
+
+// ✅ Clear cart from Firebase
+export const clearCartFromFirebase = async (userId) => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            cart: [],
+            cartUpdatedAt: new Date().toISOString()
+        });
+        console.log('Cart cleared from Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error clearing cart from Firebase:', error);
+        throw error;
+    }
+};
+
+// ✅ Create order with pending status (requires seller approval)
+export const createOrder = async (orderData) => {
+    try {
+        const order = {
+            ...orderData,
+            status: 'pending', // Default status - pending seller approval
+            orderDate: new Date().toISOString(),
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+
+        const docRef = await addDoc(collection(db, 'orders'), order);
+        console.log('Order created with ID:', docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error('Error creating order:', error);
+        throw error;
+    }
+};
+
+// ✅ Get orders by customer ID
+export const getOrdersByCustomer = async (customerId) => {
+    try {
+        const q = query(collection(db, 'orders'), where('customerId', '==', customerId));
+        const querySnapshot = await getDocs(q);
+        const orders = [];
+        querySnapshot.forEach((doc) => {
+            orders.push({ id: doc.id, ...doc.data() });
+        });
+        return orders.sort((a, b) => b.createdAt - a.createdAt);
+    } catch (error) {
+        console.error('Error getting orders by customer:', error);
+        throw error;
+    }
+};
+
+// ✅ Update order status (for seller approval)
+export const updateOrderStatus = async (orderId, status, sellerNotes = '') => {
+    try {
+        const updateData = {
+            status: status,
+            updatedAt: Date.now()
+        };
+
+        if (sellerNotes) {
+            updateData.sellerNotes = sellerNotes;
+        }
+
+        if (status === 'approved') {
+            updateData.approvedAt = new Date().toISOString();
+        } else if (status === 'rejected') {
+            updateData.rejectedAt = new Date().toISOString();
+        }
+
+        await updateDoc(doc(db, 'orders', orderId), updateData);
+        console.log(`Order ${orderId} status updated to: ${status}`);
+        return true;
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        throw error;
+    }
+};
+
+// ✅ Get all products (for admin/browsing)
+export const getAllProducts = async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, 'products'));
+        const products = [];
+        querySnapshot.forEach((doc) => {
+            products.push({ id: doc.id, ...doc.data() });
+        });
+        return products;
+    } catch (error) {
+        console.error('Error getting all products:', error);
+        throw error;
+    }
+};
+
+// ✅ Get products by category ID
+export const getProductsByCategory = async (categoryId) => {
+    try {
+        const q = query(collection(db, 'products'), where('categoryId', '==', categoryId), where('status', '==', 'approved'));
+        const querySnapshot = await getDocs(q);
+        const products = [];
+        querySnapshot.forEach((doc) => {
+            products.push({ id: doc.id, ...doc.data() });
+        });
+        return products;
+    } catch (error) {
+        console.error('Error getting products by category:', error);
+        throw error;
+    }
+};
+
+// ✅ Get products by category name
+export const getProductsByCategoryName = async (categoryName) => {
+    try {
+        const q = query(collection(db, 'products'), where('categoryName', '==', categoryName), where('status', '==', 'approved'));
+        const querySnapshot = await getDocs(q);
+        const products = [];
+        querySnapshot.forEach((doc) => {
+            products.push({ id: doc.id, ...doc.data() });
+        });
+        return products;
+    } catch (error) {
+        console.error('Error getting products by category name:', error);
+        throw error;
+    }
+};
 
 // Upload image to Cloudinary
 export const uploadImageToCloudinary = async (imageUri) => {

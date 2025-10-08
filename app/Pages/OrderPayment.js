@@ -1,16 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  FlatList, 
-  ScrollView, 
-  SafeAreaView, 
-  RefreshControl, 
-  ActivityIndicator, 
-  TextInput, 
-  Alert 
-} from "react-native";
+import { View, Text, TouchableOpacity, FlatList, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator, TextInput, Alert } from "react-native";
 import { useSelector } from "react-redux";
 import { listOrdersBySeller, updateOrder } from "../Helper/firebaseHelper";
 import { Feather } from "@expo/vector-icons";
@@ -67,10 +56,6 @@ export default function SellerOrders({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
-      <StandardHeader 
-        title="Order Management" 
-        navigation={navigation} 
-      />
       <View style={{ flex: 1, padding: 16 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         {["All", "Pending", "Delivered", "Canceled"].map((status) => (

@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { login } from "../Helper/firebaseHelper";
-import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
+import { login, loadCartFromFirebase } from "../Helper/firebaseHelper";
+import { setRole, setUser, initializeCart } from '../redux/Slices/HomeDataSlice';
 
 const Login = ({ navigation }) => {
    
   const [email, setEmail] = useState("anum@gmail.com");
   const [password, setPassword] = useState("Anum@@");
-  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
 
   const handleLogin = async () => {
@@ -39,6 +38,16 @@ const Login = ({ navigation }) => {
         
         dispatch(setRole(userRole));
         dispatch(setUser(user));
+
+        // Load cart from Firebase for this user
+        try {
+          const cartData = await loadCartFromFirebase(user.uid);
+          dispatch(initializeCart({ userId: user.uid, cartData }));
+        } catch (cartError) {
+          console.error('Error loading cart:', cartError);
+          // Continue with login even if cart loading fails
+        }
+
         // Navigation will be handled by RenderStack based on role and status
         // No need to navigate manually as the stack will render appropriately
       } else {

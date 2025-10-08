@@ -1,101 +1,234 @@
-import { View, Text, ScrollView, Image, TouchableOpacity,TextInput } from 'react-native'
+import { View, Text, ScrollView, Image, TouchableOpacity, TextInput, Alert } from 'react-native'
 import React from 'react'
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useSelector, useDispatch } from 'react-redux';
+import { removeFromCart, updateCartItem, clearCart } from '../redux/Slices/HomeDataSlice';
+import { saveCartToFirebase, clearCartFromFirebase } from '../Helper/firebaseHelper';
 
-const Cart = ({navigation}) => {
+const Cart = ({ navigation }) => {
+    const dispatch = useDispatch();
+    const cartItems = useSelector((state) => state.home.cart || []);
+
+    const updateQuantity = async (itemId, newQuantity) => {
+        if (newQuantity <= 0) {
+            dispatch(removeFromCart(itemId));
+        } else {
+            dispatch(updateCartItem({ id: itemId, updates: { quantity: newQuantity } }));
+        }
+
+        // Save to Firebase
+        const user = useSelector((state) => state.home.user);
+        if (user?.uid) {
+            const updatedCart = useSelector((state) => state.home.cart);
+            try {
+                await saveCartToFirebase(user.uid, updatedCart);
+            } catch (error) {
+                console.error('Error saving cart to Firebase:', error);
+            }
+        }
+    };
+
+    const removeItem = async (itemId) => {
+        Alert.alert(
+            "Remove Item",
+            "Are you sure you want to remove this item from cart?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Remove",
+                    onPress: async () => {
+                        dispatch(removeFromCart(itemId));
+
+                        // Save to Firebase
+                        const user = useSelector((state) => state.home.user);
+                        if (user?.uid) {
+                            const updatedCart = useSelector((state) => state.home.cart);
+                            try {
+                                await saveCartToFirebase(user.uid, updatedCart);
+                            } catch (error) {
+                                console.error('Error saving cart to Firebase:', error);
+                            }
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const calculateSubtotal = () => {
+        return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    };
+
+    const calculateSecurityFees = () => {
+        return cartItems.reduce((total, item) => total + (item.securityFee * item.quantity), 0);
+    };
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + calculateSecurityFees();
+    };
+
+    const renderCartItem = (item) => (
+        <View key={item.id} style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#F3D5C6",
+            padding: 10,
+            marginBottom: 10,
+            borderRadius: 10
+        }}>
+            <Image
+                source={{ uri: item.imageUrl }}
+                style={{ width: 70, height: 90, borderRadius: 8, marginRight: 12 }}
+                defaultSource={require('./Bold.png')}
+            />
+            <View style={{ backgroundColor: "#F3D5C6", flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.name}</Text>
+                <Text style={{ fontSize: 14, color: "gray", marginVertical: 5 }}>
+                    Rs: {item.price}
+                </Text>
+                <Text style={{ fontSize: 12, color: "#8E6652", marginBottom: 5 }}>
+                    Security Fee: Rs {item.securityFee}
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
+                    <TouchableOpacity
+                        style={{
+                            width: 28,
+                            height: 28,
+                            borderWidth: 1,
+                            borderColor: "gray",
+                            borderRadius: 14,
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}
+                        onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                    >
+                        <Text style={{ fontSize: 16, fontWeight: "bold" }}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={{ marginHorizontal: 15, fontSize: 16 }}>{item.quantity}</Text>
+                    <TouchableOpacity
+                        style={{
+                            width: 28,
+                            height: 28,
+                            borderWidth: 1,
+                            borderColor: "gray",
+                            borderRadius: 14,
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}
+                        onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                    >
+                        <Text style={{ fontSize: 16, fontWeight: "bold" }}>+</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <Text style={{ fontSize: 14, marginHorizontal: 8 }}>{item.size}</Text>
+            <TouchableOpacity onPress={() => removeItem(item.id)}>
+                <Ionicons name="trash-outline" size={22} color="#ff4444" />
+            </TouchableOpacity>
+        </View>
+    );
+
+    if (cartItems.length === 0) {
+        return (
+            <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: "#F3D5C6"
+            }}>
+                <Ionicons name="cart-outline" size={80} color="#8E6652" />
+                <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 20, color: '#8E6652' }}>
+                    Your Cart is Empty
+                </Text>
+                <Text style={{ fontSize: 16, color: 'gray', marginTop: 10, textAlign: 'center' }}>
+                    Add some beautiful outfits to your cart!
+                </Text>
+                <TouchableOpacity
+                    style={{
+                        backgroundColor: '#8E6652',
+                        padding: 15,
+                        borderRadius: 10,
+                        marginTop: 20
+                    }}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
+                        Continue Shopping
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     return (
-        <ScrollView style={{ backgroundColor: "#F3D5C6", height: '1000%' }}>
-            <View style={{ width: '100%', height: 380 }}>
-                <View style={{ alignItems: "center", padding: 15, justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 18, fontWeight: "bold", marginLeft: 15 }}>Your Cart</Text>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3D5C6", padding: 10 }}>
-                    <Image source={require('./Bold.png')} style={{ width: 70, height: 90, borderRadius: 8, marginRight: 12 }} />
-                    <View style={{ backgroundColor: "#F3D5C6", width: '60%' }}>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>Eastern Gharara</Text>
-                        <Text style={{ fontSize: 14, color: "gray", marginVertical: 5 }}>Rs: 39,999</Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
-                            <TouchableOpacity style={{ width: '15%', height: 28, borderWidth: 1, borderColor: "gray", borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold" }}>-</Text>
-                            </TouchableOpacity>
-                            <Text style={{ marginHorizontal: 8 }}>1</Text>
-                            <TouchableOpacity style={{ width: 32, height: 28, borderWidth: 1, borderColor: "gray", borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold" }}>+</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                    <Text style={{ fontSize: 14, marginHorizontal: 8 }}>M</Text>
-                    <TouchableOpacity>
-                        <Ionicons name="trash-outline" size={22} color="black" />
-                    </TouchableOpacity>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3D5C6", padding: 10, }}>
-                    <Image source={require('./Bold1.png')} style={{ width: 70, height: 90, borderRadius: 8, marginRight: 12 }} />
-                    <View style={{ backgroundColor: "#F3D5C6", width: '60%' }}>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>Lehnga</Text>
-                        <Text style={{ fontSize: 14, color: "gray", marginVertical: 5 }}>Rs:32,000</Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
-                            <TouchableOpacity style={{ width: '15%', height: 28, borderWidth: 1, borderColor: "gray", borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold" }}>-</Text>
-                            </TouchableOpacity>
-                            <Text style={{ marginHorizontal: 8 }}>1</Text>
-                            <TouchableOpacity style={{ width: 32, height: 28, borderWidth: 1, borderColor: "gray", borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold" }}>+</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                    <Text style={{ fontSize: 14, marginHorizontal: 8 }}>L</Text>
-                    <TouchableOpacity>
-                        <Ionicons name="trash-outline" size={22} color="black" />
-                    </TouchableOpacity>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3D5C6", padding: 10 }}>
-                    <Image source={require('./Bold2.png')} style={{ width: 70, height: 90, borderRadius: 8, marginRight: 12 }} />
-                    <View style={{ backgroundColor: "#F3D5C6", width: '60%' }}>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>Sharara</Text>
-                        <Text style={{ fontSize: 14, color: "gray", marginVertical: 5 }}>Rs: 17,875</Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
-                            <TouchableOpacity style={{ width: '15%', height: 28, borderWidth: 1, borderColor: "gray", borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold" }}>-</Text>
-                            </TouchableOpacity>
-                            <Text style={{ marginHorizontal: 8 }}>1</Text>
-                            <TouchableOpacity style={{ width: 32, height: 28, borderWidth: 1, borderColor: "gray", borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold" }}>+</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                    <Text style={{ fontSize: 14, marginHorizontal: 8 }}>S</Text>
-                    <TouchableOpacity>
-                        <Ionicons name="trash-outline" size={22} color="black" />
-                    </TouchableOpacity>
+        <ScrollView style={{ backgroundColor: "#F3D5C6", flex: 1 }}>
+            <View style={{ padding: 15 }}>
+                <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}>
+                    Your Cart ({cartItems.length} items)
+                </Text>
 
-                </View>
-            </View>
-            <View style={{ backgroundColor: 'white', height:350, width: '100%',}}>
-                <View style={{ backgroundColor: 'white', padding: 20,flexDirection:'row' ,gap:130 }}>
-                    <Text>Product Price</Text>
-                     <TextInput placeholder="Rs:...." style={{marginTop:'-8'}}></TextInput>
-                </View>
+                {/* Cart Items */}
+                {cartItems.map(renderCartItem)}
 
-                <View style={{ backgroundColor: 'white', padding: 20,flexDirection:'row' ,gap:170 }}>
-                    <Text>Shipping</Text>
-                     <TextInput placeholder="....." style={{marginTop:'-8'}}></TextInput>
-                </View>
+                {/* Order Summary */}
+                <View style={{
+                    backgroundColor: 'white',
+                    borderRadius: 10,
+                    padding: 20,
+                    marginTop: 20
+                }}>
+                    <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        marginBottom: 10
+                    }}>
+                        <Text style={{ fontSize: 16 }}>Subtotal:</Text>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+                            Rs {calculateSubtotal().toLocaleString()}
+                        </Text>
+                    </View>
 
-                <View style={{ backgroundColor: 'white', padding: 20,flexDirection:'row' ,gap:170 }}>
-                    <Text>Subtotal</Text>
-                     <TextInput placeholder="....." style={{marginTop:'-8'}}></TextInput>
-                </View>
-                <View style={{ backgroundColor: 'white', padding: 30 }}>
-                    <TouchableOpacity  onPress={() => navigation.navigate("Checkout")}style={{ height: 50, backgroundColor: "rgba(164, 123, 104, 1)", justifyContent: 'center', width: 300, alignItems: 'center', borderRadius: 20 }}>
-                        <Text style={{ fontSize: 18 }} >Proceed to checkout</Text>
+                    <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        marginBottom: 10
+                    }}>
+                        <Text style={{ fontSize: 16 }}>Security Fees:</Text>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+                            Rs {calculateSecurityFees().toLocaleString()}
+                        </Text>
+                    </View>
+
+                    <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        marginBottom: 20,
+                        paddingTop: 10,
+                        borderTopWidth: 1,
+                        borderTopColor: '#ddd'
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Total:</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#8E6652' }}>
+                            Rs {calculateTotal().toLocaleString()}
+                        </Text>
+                    </View>
+
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate("Checkout")}
+                        style={{
+                            height: 50,
+                            backgroundColor: "#8E6652",
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderRadius: 20
+                        }}
+                    >
+                        <Text style={{ fontSize: 18, color: 'white', fontWeight: 'bold' }}>
+                            Proceed to Checkout
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
-
-
-
-
         </ScrollView>
     )
 }

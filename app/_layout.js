@@ -21,14 +21,10 @@ import Management from './Pages/Management';
 import Notification from './Pages/Notification';
 import NotificationSettings from './Pages/NotificationSettings';
 import OrderPayment from './Pages/OrderPayment';
-import Password from './Pages/Password';
-import PendingApproval from './Pages/PendingApproval';
-import PickUp from './Pages/PickUp';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Profile from './Pages/Profile';
 import Reviews from './Pages/Reviews';
 import SignUp from './Pages/SignUp';
-import Splash from './Pages/Splash';
 import TermsOfService from './Pages/TermsOfService';
 import ViewProduct from './Pages/ViewProduct';
 
@@ -43,6 +39,7 @@ import Complain from './Pages/Complain';
 import Delivered from './Pages/Delivered';
 import Detail from './Pages/Detail';
 import EProfile from './Pages/Eprofile';
+import VTO from './Pages/VTO';
 import Home2 from './Pages/Home2';
 import Homestack from './Pages/Homestack';
 import Index from "./Pages/Index";
@@ -51,7 +48,8 @@ import Order from "./Pages/Order";
 import OrderDetail from './Pages/OrderDetail';
 import Payment from "./Pages/Payment";
 import Profiles from './Pages/Profiles';
-import VTO from './Pages/VTO';
+import OrderApproval from './Pages/OrderApproval';
+import CategoryPage from './Pages/CategoryPage';
 
 const Stack = createNativeStackNavigator();
 const SellerStack = () => {
@@ -93,6 +91,7 @@ const SellerStack = () => {
     <Stack.Screen name="Management" component={Management}/>
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
     <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
+    <Stack.Screen name="OrderApproval" component={OrderApproval} options={{ headerShown: false }} />
   </Stack.Navigator>
   );
 };
@@ -135,7 +134,7 @@ const CustomerStack = () => (
     <Stack.Screen name="Homestack" component={Homestack} />
     <Stack.Screen name="Mhndi" component={Mhndi} />
     <Stack.Screen name="Payment" component={Payment} />
-    <Stack.Screen name="Order" component={Order} />
+    <Stack.Screen name="Category" component={CategoryPage} />
     <Stack.Screen name="Index" component={Index} />
     <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
 

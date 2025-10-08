@@ -59,7 +59,7 @@ export default function HelpCenter({navigation}) {
 
   return (
     <SafeAreaView style={{flex:1,backgroundColor:'#F1DCD1'}}>
-     
+     <StandardHeader title="Help Center" navigation={navigation} />
     
 
       <ScrollView contentContainerStyle={{padding:20}}>

@@ -11,14 +11,7 @@ export default function StandardHeader({
   textColor = '#fff'
 }) {
   return (
-    <View style={{
-      backgroundColor: backgroundColor,
-      paddingVertical: 16,
-      paddingHorizontal: 20,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    }}>
+    <View style={{backgroundColor: backgroundColor,paddingVertical: 16,paddingHorizontal: 20,flexDirection: 'row',alignItems: 'center',justifyContent: 'space-between',}}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
         {showBackButton && (
           <TouchableOpacity 
@@ -28,12 +21,7 @@ export default function StandardHeader({
             <Feather name="arrow-left" size={24} color={textColor} />
           </TouchableOpacity>
         )}
-        <Text style={{
-          fontSize: 20,
-          fontWeight: '700',
-          color: textColor,
-          flex: 1,
-        }}>
+        <Text style={{fontSize: 20,fontWeight: '700',color: textColor,flex: 1,}}>
           {title}
         </Text>
       </View>
