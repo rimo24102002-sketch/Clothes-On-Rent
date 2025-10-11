@@ -65,29 +65,57 @@ const Home2 = () => {
     }
 
     return (
-        <ScrollView style={{ flex: 1, backgroundColor: "#fdfdfdff" }}>
-            <View style={{ flex: 1, justifyContent: "center" }}>
-                <Carousel loop width={width} height={200} autoPlay={true} data={images} scrollAnimationDuration={1000} renderItem={({ item }) => (
-                    <Image source={item} style={{ width: "90%", height: "100%", borderRadius: 12, marginBottom: 40, marginHorizontal: 20, }} resizeMode="cover" />)} />
+        <View style={{ flex: 1, backgroundColor: "#fdfdfdff" }}>
+            {/* Header */}
+            <View style={{
+                backgroundColor: '#8E6652',
+                padding: 15,
+                paddingTop: 50,
+                flexDirection: 'row',
+                alignItems: 'center',
+            }}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={{ marginRight: 15 }}
+                >
+                    <Icon name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={{
+                    color: '#fff',
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    flex: 1,
+                    textAlign: 'center',
+                    marginRight: 39 // To center the title by compensating for back button width
+                }}>
+                    Home
+                </Text>
             </View>
-            <Text style={{ fontSize: 18, fontWeight: "bold", marginTop: 10, marginLeft: 20 }}>Categories</Text>
 
-            {/* Dynamic Categories */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginTop: 15, paddingHorizontal: 10 }}>
-                {categories.map((category) => (
-                    <View key={category.cid} style={{ alignItems: "center", marginBottom: 15, width: '25%' }}>
-                        <TouchableOpacity onPress={() => handleCategoryPress(category)}>
-                            <Image
-                                source={getCategoryImage(category)}
-                                style={{ width: 60, height: 60, borderRadius: 30 }}
-                            />
-                        </TouchableOpacity>
-                        <Text style={{ fontSize: 14, marginTop: 5, textAlign: 'center' }}>{category.title}</Text>
-                    </View>
-                ))}
-            </View>
+            <ScrollView style={{ flex: 1 }}>
+                <View style={{ flex: 1, justifyContent: "center" }}>
+                    <Carousel loop width={width} height={200} autoPlay={true} data={images} scrollAnimationDuration={1000} renderItem={({ item }) => (
+                        <Image source={item} style={{ width: "90%", height: "100%", borderRadius: 12, marginBottom: 40, marginHorizontal: 20, }} resizeMode="cover" />)} />
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: "bold", marginTop: 10, marginLeft: 20 }}>Categories</Text>
 
-        </ScrollView>
+                {/* Dynamic Categories */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginTop: 15, paddingHorizontal: 10 }}>
+                    {categories.map((category) => (
+                        <View key={category.cid} style={{ alignItems: "center", marginBottom: 15, width: '25%' }}>
+                            <TouchableOpacity onPress={() => handleCategoryPress(category)}>
+                                <Image
+                                    source={getCategoryImage(category)}
+                                    style={{ width: 60, height: 60, borderRadius: 30 }}
+                                />
+                            </TouchableOpacity>
+                            <Text style={{ fontSize: 14, marginTop: 5, textAlign: 'center' }}>{category.title}</Text>
+                        </View>
+                    ))}
+                </View>
+
+            </ScrollView>
+        </View>
     )
 }
 

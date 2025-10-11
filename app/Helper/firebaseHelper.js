@@ -1,13 +1,13 @@
 // firestoreService.js
 import { createUserWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, updatePassword } from "firebase/auth";
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
-import { auth, db } from '../../firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { auth, db, storage } from '../../firebase';
 
 //--------------------------------
 // 🔹 Firestore Services
 //--------------------------------
 
-// ✅ Add data
 export const addData = async (collectionName, data) => {
     try {
         const docRef = await addDoc(collection(db, collectionName), data);
@@ -129,12 +129,12 @@ export const login = async (email, password) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const firebaseUser = userCredential.user;
-        
+
         // Get user data from Firestore
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (userDoc.exists()) {
             const userData = { uid: firebaseUser.uid, ...userDoc.data() };
-            
+
             // If user is a seller, also fetch seller data for up-to-date status
             if (userData.role === "Seller" && userData.sellerId) {
                 try {
@@ -143,7 +143,7 @@ export const login = async (email, password) => {
                     if (sellerDoc.exists()) {
                         const sellerData = sellerDoc.data();
                         console.log('Fetched seller data:', sellerData);
-                        
+
                         // Merge seller data with user data (prioritize seller data for status)
                         const mergedData = {
                             ...userData,
@@ -164,7 +164,7 @@ export const login = async (email, password) => {
                     // Return user data even if seller data fetch fails
                 }
             }
-            
+
             return userData;
         } else {
             throw new Error("User data not found in database");
@@ -631,9 +631,39 @@ export const getTermsOfService = async () => {
     }
 };
 
-//--------------------------------
-// 🔹 Seller Status Management
-//--------------------------------
+// ✅ Update terms of service (admin only)
+export const updateTermsOfService = async (termsData) => {
+    try {
+        const docRef = doc(db, "legal_documents", "terms_of_service");
+        await setDoc(docRef, {
+            ...termsData,
+            updatedAt: new Date().toISOString(),
+            updatedBy: "admin"
+        }, { merge: true });
+        console.log("Terms of service updated successfully");
+        return true;
+    } catch (error) {
+        console.error("Error updating terms of service:", error);
+        throw error;
+    }
+};
+
+// ✅ Submit customer complaint
+export const submitCustomerComplaint = async (complaintData) => {
+    try {
+        const docRef = await addDoc(collection(db, "customer_complaints"), {
+            ...complaintData,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Customer complaint submitted with ID:", docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error submitting customer complaint:", error);
+        throw error;
+    }
+};
 
 // ✅ Get seller data by sellerId from sellers collection
 export const getSellerData = async (sellerId) => {
@@ -647,7 +677,7 @@ export const getSellerData = async (sellerId) => {
         console.error("Error getting seller data:", error);
         throw error;
     }
-}
+};
 
 // ✅ Update seller status (approve/reject/pending)
 export const updateSellerStatus = async (sellerId, status, adminNotes = "") => {
@@ -845,8 +875,92 @@ export const reduceStock = async (productId, size, quantity = 1) => {
 };
 
 //--------------------------------
-// 🔹 Cart Management Services
+// 🔹 Customer Profile Management Services
 //--------------------------------
+
+// ✅ Get customer profile data
+export const getCustomerProfile = async (userId) => {
+    try {
+        if (!userId) {
+            console.warn('getCustomerProfile: No userId provided');
+            return null;
+        }
+
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+            const data = userDoc.data();
+            // Ensure all fields are properly typed
+            return {
+                uid: data.uid || userId,
+                firstName: data.firstName || '',
+                lastName: data.lastName || '',
+                email: data.email || '',
+                profileImageUrl: data.profileImageUrl || null,
+                ...data
+            };
+        }
+        console.warn(`getCustomerProfile: No document found for userId: ${userId}`);
+        return null;
+    } catch (error) {
+        console.error('Error getting customer profile:', error);
+        throw error;
+    }
+};
+
+// ✅ Update customer profile data
+export const updateCustomerProfile = async (userId, profileData) => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            ...profileData,
+            updatedAt: new Date().toISOString()
+        });
+        console.log('Customer profile updated successfully');
+        return true;
+    } catch (error) {
+        console.error('Error updating customer profile:', error);
+        throw error;
+    }
+};
+
+// ✅ Upload customer profile image to Firebase Storage
+export const uploadCustomerProfileImage = async (userId, imageUri) => {
+    try {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+
+        const imageRef = ref(storage, `customer_profiles/${userId}/profile_image`);
+        await uploadBytes(imageRef, blob);
+
+        const downloadURL = await getDownloadURL(imageRef);
+        console.log('Customer profile image uploaded successfully');
+
+        // Update user document with image URL
+        await updateCustomerProfile(userId, { profileImageUrl: downloadURL });
+
+        return downloadURL;
+    } catch (error) {
+        console.error('Error uploading customer profile image:', error);
+        throw error;
+    }
+};
+
+// ✅ Delete customer profile image from Firebase Storage
+export const deleteCustomerProfileImage = async (userId) => {
+    try {
+        const imageRef = ref(storage, `customer_profiles/${userId}/profile_image`);
+        await deleteObject(imageRef);
+        console.log('Customer profile image deleted successfully');
+
+        // Update user document to remove image URL
+        await updateCustomerProfile(userId, { profileImageUrl: null });
+
+        return true;
+    } catch (error) {
+        console.error('Error deleting customer profile image:', error);
+        throw error;
+    }
+};
 
 // ✅ Save cart to Firebase
 export const saveCartToFirebase = async (userId, cartItems) => {
@@ -915,7 +1029,7 @@ export const createOrder = async (orderData) => {
     }
 };
 
-// ✅ Get orders by customer ID
+// ✅ Get orders by customer ID (for customer order management)
 export const getOrdersByCustomer = async (customerId) => {
     try {
         const q = query(collection(db, 'orders'), where('customerId', '==', customerId));
@@ -1014,25 +1128,199 @@ export const uploadImageToCloudinary = async (imageUri) => {
             type: 'image/jpeg',
             name: 'profile.jpg',
         });
+        // Unsigned upload preset configured in Cloudinary
         formData.append('upload_preset', 'react_native_uploads');
+        // Optional: keep uploads organized
+        formData.append('folder', 'my-app/profiles/customers');
 
+        // IMPORTANT: Do NOT set Content-Type manually; let fetch set the correct multipart boundary
         const response = await fetch('https://api.cloudinary.com/v1_1/drrr99dz9/image/upload', {
             method: 'POST',
             body: formData,
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
         });
 
         const data = await response.json();
-        
-        if (data.secure_url) {
-            return data.secure_url;
-        } else {
-            throw new Error('Upload failed');
+
+        if (!response.ok) {
+            const message = data?.error?.message || JSON.stringify(data);
+            throw new Error(`Cloudinary upload failed: ${message}`);
         }
+
+        if (data?.secure_url) {
+            return data.secure_url;
+        }
+
+        throw new Error('Cloudinary upload failed: missing secure_url in response');
     } catch (error) {
-        console.error('Error uploading image to Cloudinary:', error);
+        console.error('Error uploading image to Cloudinary:', error?.message || error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Customer Review Services
+//--------------------------------
+
+// ✅ Submit customer review for a product
+export const submitCustomerReview = async (reviewData) => {
+    try {
+        const docRef = await addDoc(collection(db, "customer_reviews"), {
+            ...reviewData,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            status: 'active', // active, hidden, reported
+        });
+        console.log("Customer review submitted with ID:", docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error submitting customer review:", error);
+        throw error;
+    }
+};
+
+// ✅ Get all reviews for a specific product
+export const getProductReviews = async (productId) => {
+    try {
+        const q = query(collection(db, "customer_reviews"), where("productId", "==", productId));
+        const querySnapshot = await getDocs(q);
+        const reviews = [];
+        querySnapshot.forEach((doc) => {
+            reviews.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort by creation date (newest first)
+        return reviews.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0);
+            const dateB = new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+    } catch (error) {
+        console.error("Error getting product reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Get all reviews by a specific customer
+export const getCustomerReviews = async (customerId) => {
+    try {
+        const q = query(collection(db, "customer_reviews"), where("customerId", "==", customerId));
+        const querySnapshot = await getDocs(q);
+        const reviews = [];
+        querySnapshot.forEach((doc) => {
+            reviews.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort by creation date (newest first)
+        return reviews.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0);
+            const dateB = new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+    } catch (error) {
+        console.error("Error getting customer reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Get all reviews (for admin/moderation)
+export const getAllReviews = async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "customer_reviews"));
+        const reviews = [];
+        querySnapshot.forEach((doc) => {
+            reviews.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort by creation date (newest first)
+        return reviews.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0);
+            const dateB = new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+    } catch (error) {
+        console.error("Error getting all reviews:", error);
+        throw error;
+    }
+};
+
+// ✅ Update review (for editing)
+export const updateCustomerReview = async (reviewId, updateData) => {
+    try {
+        const reviewRef = doc(db, "customer_reviews", reviewId);
+        await updateDoc(reviewRef, {
+            ...updateData,
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Customer review updated successfully");
+        return true;
+    } catch (error) {
+        console.error("Error updating customer review:", error);
+        throw error;
+    }
+};
+
+// ✅ Delete customer review
+export const deleteCustomerReview = async (reviewId) => {
+    try {
+        await deleteDoc(doc(db, "customer_reviews", reviewId));
+        console.log("Customer review deleted successfully");
+        return true;
+    } catch (error) {
+        console.error("Error deleting customer review:", error);
+        throw error;
+    }
+};
+
+// ✅ Report inappropriate review (for moderation)
+export const reportReview = async (reviewId, reason, reportedBy) => {
+    try {
+        const reviewRef = doc(db, "customer_reviews", reviewId);
+        await updateDoc(reviewRef, {
+            status: 'reported',
+            reportReason: reason,
+            reportedBy: reportedBy,
+            reportedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Review reported successfully");
+        return true;
+    } catch (error) {
+        console.error("Error reporting review:", error);
+        throw error;
+    }
+};
+
+// ✅ Get review statistics for a product
+export const getProductReviewStats = async (productId) => {
+    try {
+        const reviews = await getProductReviews(productId);
+
+        if (reviews.length === 0) {
+            return {
+                totalReviews: 0,
+                averageRating: 0,
+                ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+            };
+        }
+
+        const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+        const averageRating = totalRating / reviews.length;
+
+        const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        reviews.forEach(review => {
+            const rating = Math.round(review.rating || 0);
+            if (rating >= 1 && rating <= 5) {
+                ratingDistribution[rating]++;
+            }
+        });
+
+        return {
+            totalReviews: reviews.length,
+            averageRating: Math.round(averageRating * 10) / 10,
+            ratingDistribution
+        };
+    } catch (error) {
+        console.error("Error getting product review stats:", error);
         throw error;
     }
 };

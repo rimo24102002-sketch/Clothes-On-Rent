@@ -92,7 +92,7 @@ const CategoryPage = () => {
                 shadowRadius: 3.84,
             }}
         >
-            <TouchableOpacity onPress={() => navigation.navigate('Detail', { productId: item.id })}>
+            <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}>
                 <Image
                     source={{ uri: item.imageUrl }}
                     style={{
@@ -127,7 +127,7 @@ const CategoryPage = () => {
                         marginTop: 8,
                         alignItems: 'center'
                     }}
-                    onPress={() => addToCart(item)}
+                     onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
                 >
                     <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
                         {isInCart(item.id) ? 'Added to Cart' : 'Add to Cart'}

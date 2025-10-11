@@ -15,7 +15,7 @@ import { useSelector } from "react-redux";
 import { submitCustomerComplaint } from "../Helper/firebaseHelper";
 import * as ImagePicker from 'expo-image-picker';
 
-const Complain = ({ navigation }) => {
+const CustomerComplaint = ({ navigation }) => {
   const user = useSelector((state) => state.home.user);
 
   // Initialize state with proper defaults
@@ -32,11 +32,6 @@ const Complain = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
-
-  // Add useEffect to ensure state is properly initialized
-  useEffect(() => {
-    console.log('Complain component mounted, loading state:', loading);
-  }, []);
 
   const categories = [
     { id: 'general', name: 'General Issue', icon: 'help-circle-outline' },
@@ -114,7 +109,7 @@ const Complain = ({ navigation }) => {
 
       const complaintPayload = {
         customerId: user.uid,
-        customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Customer',
+        customerName: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Customer',
         customerEmail: user.email,
         category: complaintData.category,
         subject: complaintData.subject.trim(),
@@ -131,7 +126,7 @@ const Complain = ({ navigation }) => {
       await submitCustomerComplaint(complaintPayload);
 
       Alert.alert(
-        'Complaint Submitted',
+        'Complaint Submitted Successfully!',
         'Thank you for your feedback. We will review your complaint and respond within 24-48 hours.',
         [
           {
@@ -188,7 +183,7 @@ const Complain = ({ navigation }) => {
               textAlign: 'center',
               color: '#8E6652'
             }}>
-              Select Category
+              Select Complaint Category
             </Text>
           </View>
 
@@ -273,9 +268,34 @@ const Complain = ({ navigation }) => {
         }}>
           Submit Complaint
         </Text>
+        <Text style={{
+          fontSize: 14,
+          textAlign: 'center',
+          color: '#F1DCD1',
+          marginTop: 5
+        }}>
+          We value your feedback
+        </Text>
       </View>
 
       <View style={{ paddingHorizontal: 20 }}>
+        {/* Info Banner */}
+        <View style={{
+          backgroundColor: '#E8F5E8',
+          borderRadius: 15,
+          padding: 15,
+          marginBottom: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderLeftWidth: 4,
+          borderLeftColor: '#8E6652'
+        }}>
+          <Ionicons name="information-circle-outline" size={24} color="#8E6652" style={{ marginRight: 12 }} />
+          <Text style={{ fontSize: 14, color: '#333', flex: 1 }}>
+            Your complaint will be reviewed within 24-48 hours. We'll respond via email.
+          </Text>
+        </View>
+
         {/* Category Selection */}
         <View style={{
           backgroundColor: '#fff',
@@ -318,7 +338,7 @@ const Complain = ({ navigation }) => {
                 color: '#666',
                 marginBottom: 2
               }}>
-                Complaint Category
+                What type of issue are you facing?
               </Text>
               <Text style={{
                 fontSize: 16,
@@ -386,7 +406,7 @@ const Complain = ({ navigation }) => {
           shadowRadius: 4,
         }}>
           <Text style={{
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: '600',
             color: '#8E6652',
             marginBottom: 15,
@@ -434,7 +454,7 @@ const Complain = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Subject */}
+        {/* Subject & Description */}
         <View style={{
           backgroundColor: '#fff',
           borderRadius: 15,
@@ -446,7 +466,7 @@ const Complain = ({ navigation }) => {
           shadowRadius: 4,
         }}>
           <TextInput
-            placeholder="Subject *"
+            placeholder="Brief subject of your complaint *"
             value={complaintData.subject}
             onChangeText={(text) => handleInputChange('subject', text)}
             style={{
@@ -460,7 +480,7 @@ const Complain = ({ navigation }) => {
           />
 
           <TextInput
-            placeholder="Describe your issue in detail... *"
+            placeholder="Please describe your issue in detail... *"
             value={complaintData.description}
             onChangeText={(text) => handleInputChange('description', text)}
             multiline
@@ -562,5 +582,4 @@ const Complain = ({ navigation }) => {
   );
 };
 
-export default Complain;
-
+export default CustomerComplaint;

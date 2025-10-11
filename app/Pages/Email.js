@@ -51,27 +51,36 @@ export default function Email({ navigation }) {
 
     try {
       setLoading(true);
-      
+
       const supportData = {
         fullName: fullName.trim(),
         email: email.trim(),
         subject: subject.trim(),
         message: message.trim(),
-        sellerId: user?.sellerId || user?.uid,
-        userRole: user?.role || "Seller",
+        userId: user?.uid || "anonymous",
+        userRole: user?.role || "Customer",
+        createdAt: new Date().toISOString(),
+        timestamp: Date.now(),
+        status: "pending"
       };
 
-      await sendSupportEmail(supportData);
-      
+      console.log('Sending support email with data:', supportData);
+
+      const result = await sendSupportEmail(supportData);
+
+      console.log('Support email sent successfully:', result);
+
       Alert.alert(
-        "Success", 
+        "Success",
         "Your support email has been sent successfully! We'll get back to you within 24 hours.",
         [
           {
             text: "OK",
             onPress: () => {
+              // Clear form
               setSubject("");
               setMessage("");
+              // Navigate back
               navigation.goBack();
             }
           }
@@ -79,7 +88,10 @@ export default function Email({ navigation }) {
       );
     } catch (error) {
       console.error("Send email error:", error);
-      Alert.alert("Error", "Failed to send email. Please try again.");
+      Alert.alert(
+        "Error",
+        `Failed to send email: ${error.message || 'Please check your internet connection and try again.'}`
+      );
     } finally {
       setLoading(false);
     }
@@ -147,35 +159,38 @@ export default function Email({ navigation }) {
             {/* Message */}
             <View style={{ marginBottom: 0 }}>
               <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#333' }}>Message *</Text>
-              <TextInput 
-                placeholder="Please describe your issue in detail..." 
+              <TextInput
+                placeholder="Please describe your issue in detail..."
                 value={message}
                 onChangeText={setMessage}
-                multiline 
+                multiline
                 numberOfLines={6}
                 textAlignVertical="top"
-                style={{ borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, padding: 12, minHeight: 120, fontSize: 16 }} 
+                style={{ borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, padding: 12, minHeight: 120, fontSize: 16 }}
               />
             </View>
           </View>
         </View>
 
         {/* Send Button */}
-        <TouchableOpacity 
-          style={{ 
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            backgroundColor: '#8E6652', 
-            padding: 16, 
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: loading ? '#ccc' : '#8E6652',
+            padding: 16,
             borderRadius: 12,
-            opacity: loading ? 0.7 : 1
+            marginTop: 20
           }}
           onPress={handleSendEmail}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
+            <>
+              <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Sending...</Text>
+            </>
           ) : (
             <>
               <Feather name="send" size={20} color="#fff" style={{ marginRight: 8 }} />
@@ -186,7 +201,8 @@ export default function Email({ navigation }) {
 
         {/* Help Text */}
         <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', marginTop: 16, lineHeight: 18 }}>
-          Our support team typically responds within 24 hours during business days.
+          Our support team typically responds within 24 hours during business days.{'\n'}
+          For urgent issues, please call us directly.
         </Text>
       </ScrollView>
     </SafeAreaView>

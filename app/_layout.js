@@ -1,11 +1,13 @@
+// Core React/React Native imports
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
-import { SafeAreaView } from "react-native";
+import { View, Text, ActivityIndicator, SafeAreaView } from "react-native";
 import { Provider, useSelector } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "./redux/store/Index";
 
-// Screens (Seller)
+// Redux and Navigation setup
+const Stack = createNativeStackNavigator();
 import AccountSetting from './Pages/AccountSetting';
 import AddProduct from './Pages/AddProduct';
 import BottomTabSeller from './Pages/BottomTabSeller';
@@ -21,45 +23,48 @@ import Management from './Pages/Management';
 import Notification from './Pages/Notification';
 import NotificationSettings from './Pages/NotificationSettings';
 import OrderPayment from './Pages/OrderPayment';
+import Password from './Pages/Password';
+import PickUp from './Pages/PickUp';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
-import Profile from './Pages/Profile';
+import ProductDetail from './Pages/ProductDetail';
 import Reviews from './Pages/Reviews';
 import SignUp from './Pages/SignUp';
+import Splash from './Pages/Splash';
 import TermsOfService from './Pages/TermsOfService';
-import ViewProduct from './Pages/ViewProduct';
 
-// Screens (Customer)
+// Page Components - Customer Stack
 import BottomTab from './Pages/BottomTab';
-import CPending from './Pages/CPending';
-import CReview from './Pages/CReview';
 import Cancel from './Pages/Cancel';
 import Cart from './Pages/Cart';
+import CategoryPage from './Pages/CategoryPage';
 import Checkout from './Pages/Checkout';
 import Complain from './Pages/Complain';
+import CPending from './Pages/CPending';
+import CReview from './Pages/CReview';
+import CustomerComplaint from './Pages/CustomerComplaint';
 import Delivered from './Pages/Delivered';
 import Detail from './Pages/Detail';
 import EProfile from './Pages/Eprofile';
-import VTO from './Pages/VTO';
 import Home2 from './Pages/Home2';
 import Homestack from './Pages/Homestack';
-import Index from "./Pages/Index";
+import Index from './Pages/Index';
 import Mhndi from './Pages/Mhndi';
-import Order from "./Pages/Order";
+import Order from './Pages/Order';
 import OrderDetail from './Pages/OrderDetail';
-import Payment from "./Pages/Payment";
-import Profiles from './Pages/Profiles';
+import Payment from './Pages/Payment';
+import PendingApproval from './Pages/PendingApproval';
 import OrderApproval from './Pages/OrderApproval';
-import CategoryPage from './Pages/CategoryPage';
+import Profiles from './Pages/Profiles';
+import VTO from './Pages/VTO';
 
-const Stack = createNativeStackNavigator();
 const SellerStack = () => {
   console.log('=== SellerStack Debug ===');
   console.log('SellerStack is rendering');
   console.log('Initial route should be: BottomTabSeller');
   console.log('=== End SellerStack Debug ===');
-  
+
   return (
-    <Stack.Navigator 
+    <Stack.Navigator
       initialRouteName="BottomTabSeller"
       screenOptions={{
         headerStyle: { backgroundColor: '#8E6652' },
@@ -87,7 +92,6 @@ const SellerStack = () => {
     <Stack.Screen name="Logout" component={Logout}  />
     <Stack.Screen name="OrderPayment" component={OrderPayment}  />
     <Stack.Screen name="Delivery" component={Delivery} options={{ headerShown: false }} />
-    <Stack.Screen name="Notification" component={Notification} />
     <Stack.Screen name="Management" component={Management}/>
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
     <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
@@ -100,9 +104,9 @@ const PendingStack = () => {
   console.log('=== PendingStack Debug ===');
   console.log('PendingStack is rendering');
   console.log('=== End PendingStack Debug ===');
-  
+
   return (
-    <Stack.Navigator 
+    <Stack.Navigator
       initialRouteName="PendingApproval"
       screenOptions={{
         headerStyle: { backgroundColor: '#8E6652' },
@@ -118,24 +122,35 @@ const PendingStack = () => {
 
 const CustomerStack = () => (
   <Stack.Navigator initialRouteName="BottomTab">
-    <Stack.Screen name="Profiles" component={Profiles} />
-    <Stack.Screen name="EProfile" component={EProfile} />
-    <Stack.Screen name="CReview" component={CReview} />
-    <Stack.Screen name="OrderDetail" component={OrderDetail} />
-    <Stack.Screen name="CPending" component={CPending} />
-    <Stack.Screen name="Cancel" component={Cancel} />
-    <Stack.Screen name="Cart" component={Cart} />
-    <Stack.Screen name="Checkout" component={Checkout} />
-    <Stack.Screen name="Complain" component={Complain} />
-    <Stack.Screen name="Delivered" component={Delivered} />
-    <Stack.Screen name="Detail" component={Detail} />
-    <Stack.Screen name="Home2" component={Home2} />
-    <Stack.Screen name="VTO" component={VTO} />
-    <Stack.Screen name="Homestack" component={Homestack} />
-    <Stack.Screen name="Mhndi" component={Mhndi} />
-    <Stack.Screen name="Payment" component={Payment} />
-    <Stack.Screen name="Category" component={CategoryPage} />
-    <Stack.Screen name="Index" component={Index} />
+    <Stack.Screen name="Profiles" component={Profiles} options={{ headerShown: false }} />
+    <Stack.Screen name="EProfile" component={EProfile} options={{ headerShown: false }} />
+    <Stack.Screen name="CReview" component={CReview} options={{ headerShown: false }} />
+    <Stack.Screen name="ProductDetail" component={ProductDetail} options={{ headerShown: false }} />
+    <Stack.Screen name="OrderDetail" component={OrderDetail} options={{ headerShown: false }} />
+    <Stack.Screen name="CPending" component={CPending} options={{ headerShown: false }} />
+    <Stack.Screen name="Cancel" component={Cancel} options={{ headerShown: false }} />
+    <Stack.Screen name="Cart" component={Cart} options={{ headerShown: false }} />
+    <Stack.Screen name="Checkout" component={Checkout} options={{ headerShown: false }} />
+    <Stack.Screen name="Complain" component={Complain} options={{ headerShown: false }} />
+    <Stack.Screen name="CustomerComplaint" component={CustomerComplaint} options={{ headerShown: false }} />
+    <Stack.Screen name="Delivered" component={Delivered} options={{ headerShown: false }} />
+    <Stack.Screen name="Detail" component={Detail} options={{ headerShown: false }} />
+    <Stack.Screen name="Home2" component={Home2} options={{ headerShown: false }} />
+    <Stack.Screen name="VTO" component={VTO} options={{ headerShown: false }} />
+    <Stack.Screen name="Homestack" component={Homestack} options={{ headerShown: false }} />
+    <Stack.Screen name="Mhndi" component={Mhndi} options={{ headerShown: false }} />
+    <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false }} />
+    <Stack.Screen name="Category" component={CategoryPage} options={{ headerShown: false }} />
+    <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{ headerShown: false }} />
+    <Stack.Screen name="TermsOfService" component={TermsOfService} options={{ headerShown: false }} />
+    <Stack.Screen name="AccountSetting" component={AccountSetting} options={{ headerShown: false }} />
+    <Stack.Screen name="Password" component={Password} options={{ headerShown: false }} />
+    <Stack.Screen name="Delete" component={Delete} options={{ headerShown: false }} />
+    <Stack.Screen name="Logout" component={Logout} options={{ headerShown: false }} />
+    <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+    <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
+    <Stack.Screen name="HelpCenter" component={HelpCenter} options={{ headerShown: false }} />
+    <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
     <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
 
   </Stack.Navigator>
@@ -191,7 +206,6 @@ const RenderStack = () => {
       );
   }
 };
-
 const App = () => {
   return (
     <Provider store={store}>

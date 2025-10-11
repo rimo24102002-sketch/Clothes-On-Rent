@@ -1,42 +1,116 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
-const Pending = ({ navigation }) => {
-    return (
-        <ScrollView style={{ backgroundColor: "#fff", height: '1000%' }}>
-            <View style={{ marginBottom: 15, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 18, fontWeight: "bold", }}>My Orders</Text>
-                <View style={{ flexDirection: "row", justifyContent: "space-around", marginTop: 30, marginHorizontal: 20, gap: 20 }} >
-                    <TouchableOpacity><Text style={{ fontSize: 14, fontWeight: "500", color: "Black", backgroundColor: '#f7f1eeff', paddingHorizontal: 15, paddingVertical: 6, borderRadius: 20, }} onPress={() => navigation.navigate("Pending")} > Pending</Text></TouchableOpacity>
-                    <TouchableOpacity ><Text style={{ fontSize: 14, fontWeight: "500", color: "Black", backgroundColor: "rgba(164, 123, 104, 1)", paddingHorizontal: 15, paddingVertical: 6, borderRadius: 20, }} >Deliverd</Text></TouchableOpacity>
-                    <TouchableOpacity><Text style={{ fontSize: 14, fontWeight: "500", color: "Black", backgroundColor: '#f7f1eeff', paddingHorizontal: 15, paddingVertical: 6, borderRadius: 20, }} onPress={() => navigation.navigate("Cancel")} >Cancelled</Text></TouchableOpacity>
-                </View>
-                <View style={{ borderRadius: 10, padding: 15, marginTop: 20, width: "90%", height: 170, backgroundColor: '#F3D5C6' }}>
-                    <Text style={{ fontWeight: "bold" }}>Order #1524</Text>
-                    <Text> Date: 13/05/2025 </Text>
-                    <Text>Quantity: 1  </Text>
-                    <Text>Subtotal:34,500</Text>
-                   <TouchableOpacity onPress={() => navigation.navigate("OrderDetail")}><Text style={{ color: 'green', marginTop: 5 }}>Deliverd</Text></TouchableOpacity> 
-                    <TouchableOpacity style={{ marginTop: 10, backgroundColor: "#f5f5f5", padding: 8, borderRadius: 6 }}>
-                        <Text>Details</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={{ borderRadius: 10, padding: 15, marginTop: 20, width: "90%", height: 170, backgroundColor: '#F3D5C6' }}>
-                    <Text style={{ fontWeight: "bold" }}>Order #1010</Text>
-                    <Text> Date: 25/09/2025 </Text>
-                    <Text>Quantity:2 </Text>
-                    <Text>Subtotal:44,000</Text>
-                    <Text style={{ color: 'green', marginTop: 5 }}>Deliverd</Text>
-                    <TouchableOpacity style={{ marginTop: 10, backgroundColor: "#f5f5f5", padding: 8, borderRadius: 6 }}>
-                        <Text>Details</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+const Delivered = () => {
+  const navigation = useNavigation();
 
+  const handleReviewProduct = (orderId, productName, productImage) => {
+    navigation.navigate('CReview', {
+      productId: orderId, // Using orderId as productId for now
+      productName: productName,
+      productImage: productImage
+    });
+  };
+  return (
+    <ScrollView style={{ backgroundColor: "#fff", flex: 1 }}>
+      {/* Professional Header */}
+      <View style={{
+        backgroundColor: '#8E6652',
+        paddingVertical: 20,
+        paddingHorizontal: 20,
+        borderBottomLeftRadius: 25,
+        borderBottomRightRadius: 25,
+        marginBottom: 20
+      }}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={{
+          fontSize: 20,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: '#fff',
+          marginTop: 10
+        }}>
+          Delivered Orders
+        </Text>
+      </View>
 
+      <View style={{ marginBottom: 15, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-around", marginTop: 30, marginHorizontal: 20, gap: 20 }} >
+          <TouchableOpacity onPress={() => navigation.navigate('CPending')}>
+            <Text style={{ fontSize: 14, fontWeight: "500", color: "Black", backgroundColor: '#f7f1eeff', paddingHorizontal: 15, paddingVertical: 6, borderRadius: 20, }}>
+              Pending
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Delivered')}>
+            <Text style={{ fontSize: 14, fontWeight: "500", color: "Black", backgroundColor: "rgba(164, 123, 104, 1)", paddingHorizontal: 15, paddingVertical: 6, borderRadius: 20, }}>
+              Delivered
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Cancel')}>
+            <Text style={{ fontSize: 14, fontWeight: "500", color: "Black", backgroundColor: '#f7f1eeff', paddingHorizontal: 15, paddingVertical: 6, borderRadius: 20, }}>
+              Cancelled
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ borderRadius: 10, padding: 15, marginTop: 20, width: "90%", height: 170, backgroundColor: '#F3D5C6' }}>
+          <Text style={{ fontWeight: "bold" }}>Order #1524</Text>
+          <Text> Date: 13/05/2025 </Text>
+          <Text>Quantity: 1  </Text>
+          <Text>Subtotal:34,500</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('OrderDetail')}>
+            <Text style={{ color: 'green', marginTop: 5 }}>Delivered</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ marginTop: 10, backgroundColor: "#f5f5f5", padding: 8, borderRadius: 6 }}>
+            <Text>Details</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              marginTop: 8,
+              backgroundColor: "#8E6652",
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 15,
+              alignSelf: 'flex-start'
+            }}
+            onPress={() => handleReviewProduct('1524', 'Beautiful Mehndi Dress', 'https://example.com/image.jpg')}
+          >
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Review Product</Text>
+          </TouchableOpacity>
+        </View>
 
-        </ScrollView>
-    );
+        <View style={{ borderRadius: 10, padding: 15, marginTop: 20, width: "90%", height: 170, backgroundColor: '#F3D5C6' }}>
+          <Text style={{ fontWeight: "bold" }}>Order #1010</Text>
+          <Text> Date: 25/09/2025 </Text>
+          <Text>Quantity:2 </Text>
+          <Text>Subtotal:44,000</Text>
+          <Text style={{ color: 'green', marginTop: 5 }}>Delivered</Text>
+          <TouchableOpacity style={{ marginTop: 10, backgroundColor: "#f5f5f5", padding: 8, borderRadius: 6 }}>
+            <Text>Details</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              marginTop: 8,
+              backgroundColor: "#8E6652",
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 15,
+              alignSelf: 'flex-start'
+            }}
+            onPress={() => handleReviewProduct('1010', 'Elegant Abaya', 'https://example.com/image2.jpg')}
+          >
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Review Product</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
 };
 
-export default Pending
+export default Delivered;

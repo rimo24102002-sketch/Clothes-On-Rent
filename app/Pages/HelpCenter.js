@@ -74,13 +74,12 @@ export default function HelpCenter({navigation}) {
             onChangeText={setSearchQuery}
           />
         </View>
-
         {/* Quick Actions */}
         <View style={{backgroundColor:'#fff',borderRadius:12,padding:16,marginBottom:16,borderWidth:1,borderColor:'#E0E0E0'}}>
           <Text style={{fontSize:16,fontWeight:'700',color:'#8E6652',marginBottom:12}}>Get Help</Text>
-          
+
           {/* Email Support */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={{flexDirection:'row',alignItems:'center',paddingVertical:12}}
             onPress={() => navigation.navigate('Email')}
           >
@@ -94,7 +93,7 @@ export default function HelpCenter({navigation}) {
           <TouchableOpacity onPress={() => setShowFAQ(!showFAQ)}>
             <Text style={{fontSize:16,fontWeight:'700',color:'#8E6652',marginBottom:12}}>FAQ {showFAQ ? "▲" : "▼"}</Text>
           </TouchableOpacity>
-          
+
           {showFAQ && faqData.map((faq) => (
             <View key={faq.id} style={{paddingVertical:8,borderBottomWidth:1,borderBottomColor:'#F1DCD1'}}>
               <Text style={{fontSize:16,color:'#8E6652',fontWeight:'600',marginBottom:4}}>{faq.question}</Text>

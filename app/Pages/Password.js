@@ -139,8 +139,33 @@ const Password = ({ navigation }) => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
-          
-            <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 30 }}>
+            {/* Professional Header */}
+            <View style={{
+                backgroundColor: '#8E6652',
+                paddingVertical: 20,
+                paddingHorizontal: 20,
+                borderBottomLeftRadius: 25,
+                borderBottomRightRadius: 25,
+                marginBottom: 20
+            }}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
+                >
+                    <Feather name="arrow-left" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={{
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    color: '#fff',
+                    marginTop: 10
+                }}>
+                    Change Password
+                </Text>
+            </View>
+
+            <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 10 }}>
                 <Text style={{ fontSize: 22, fontWeight: "700", color: "#8E6652", marginBottom: 8 }}>Edit Password</Text>
                 <Text style={{ color: "#666", marginBottom: 30, lineHeight: 20 }}>
                     Your password must be at least 6 characters and should include a combination of numbers, letters and special characters (!@#$%).
@@ -201,12 +226,12 @@ const Password = ({ navigation }) => {
                 </View>
 
                 {/* Change Password Button */}
-                <TouchableOpacity 
-                    style={{ 
-                        backgroundColor: "#8E6652", 
-                        height: 50, 
-                        borderRadius: 12, 
-                        justifyContent: "center", 
+                <TouchableOpacity
+                    style={{
+                        backgroundColor: "#8E6652",
+                        height: 50,
+                        borderRadius: 12,
+                        justifyContent: "center",
                         alignItems: "center",
                         opacity: loading ? 0.7 : 1,
                         marginTop: 30

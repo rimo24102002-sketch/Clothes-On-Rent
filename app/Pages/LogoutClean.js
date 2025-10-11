@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../Helper/firebaseHelper';
 import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
 
+const { width } = Dimensions.get('window');
 
 export default function Logout({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,13 +35,13 @@ export default function Logout({ navigation }) {
               dispatch(setUser({}));
               dispatch(setRole(''));
 
-              // Navigate to login page - use replace instead of reset for React Navigation v6+
-              navigation.replace('Login');
+              // Navigate to login page
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
 
-              // Show success message after navigation
-              setTimeout(() => {
-                Alert.alert('Success', 'You have been logged out successfully.');
-              }, 100);
+              Alert.alert('Success', 'You have been logged out successfully.');
 
             } catch (error) {
               console.error('Logout error:', error);

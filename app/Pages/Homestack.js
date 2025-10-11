@@ -20,7 +20,7 @@ const HomeStack = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <Stack.Navigator initialRouteName="Home2">
         <Stack.Screen name="Profile" component={Profile} />
-        <Stack.Screen name="Home2" component={Home2} />
+        <Stack.Screen name="Home2" options={{ headerShown: false }} component={Home2} />
         <Stack.Screen name="Mhndi" component={Mhndi} />
         {/* <Stack.Screen name="Detail" component={Detail} /> */}
         <Stack.Screen name="VTO" component={VTO} />

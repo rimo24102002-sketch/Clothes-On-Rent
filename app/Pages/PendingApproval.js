@@ -137,6 +137,12 @@ const PendingApproval = ({ navigation }) => {
     <ScrollView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
       {/* Header */}
       <View style={{ backgroundColor: '#8E6652', paddingVertical: 20, paddingHorizontal: 24 }}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
+        >
+          <Feather name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#fff', marginTop: 20 }}>
           Pending Approval
         </Text>
