@@ -40,7 +40,7 @@ const Home2 = () => {
     };
 
     const getCategoryImage = (category) => {
-        console.log('Category title:', category.title); // Debug log
+        console.log('Category title:', category.title);// Debug log
 
         const categoryImages = {
             'Mehndi': require('./pic.png'),      // Mehndi uses pic.png
