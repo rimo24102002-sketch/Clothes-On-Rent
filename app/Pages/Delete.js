@@ -3,8 +3,9 @@ import { View, Text, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator, T
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from "react-native-vector-icons/Ionicons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { deleteUserAccount, reauthenticateUser } from '../Helper/firebaseHelper';
-import { setUser, setRole } from '../redux/Slices/HomeDataSlice';
+import { setUser, setRole } from '../_redux/Slices/HomeDataSlice';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,6 +14,7 @@ const Delete = ({ navigation }) => {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const user = useSelector((state) => state.home.user);
     const dispatch = useDispatch();
     const nav = useNavigation();
@@ -55,35 +57,71 @@ const Delete = ({ navigation }) => {
         }
 
         try {
+            console.log(' [DELETE UI] Starting deletion process...');
             setIsLoading(true);
+            setIsDeletingAccount(true);
             setPasswordError('');
+            
+            // Set global flag to prevent auth listener interference
+            global.isDeletingAccount = true;
+            console.log(' [DELETE UI] Global deletion flag set');
 
+            console.log(' [DELETE UI] Step 1: Re-authenticating user...');
             // Re-authenticate user first
             await reauthenticateUser(user.email, password);
+            console.log(' [DELETE UI] Re-authentication successful');
 
-            // Delete the account
+            console.log(' [DELETE UI] Step 2: Deleting account...');
+            // Delete the account (Firestore first, then Auth)
             await deleteUserAccount(user.uid);
+            console.log(' [DELETE UI] Account deleted successfully');
 
+            console.log(' [DELETE UI] Step 3: Clearing Redux state...');
             // Clear Redux state
             dispatch(setUser(null));
             dispatch(setRole(null));
+            console.log(' [DELETE UI] Redux state cleared');
 
-            // Navigate to login screen
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-            });
+            console.log(' [DELETE UI] Step 4: Clearing AsyncStorage...');
+            // Clear AsyncStorage completely
+            await AsyncStorage.clear();
+            console.log(' [DELETE UI] AsyncStorage cleared');
+
+            console.log(' [DELETE UI] Step 5: Navigating to Home screen...');
+            // Close modal first
+            setShowPasswordModal(false);
+            
+            // Clear global deletion flag
+            global.isDeletingAccount = false;
+            
+            // Navigate to Home screen (works for both Seller and Customer)
+            setTimeout(() => {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Home' }],
+                });
+                console.log(' [DELETE UI] Navigation to Home complete');
+            }, 100);
 
             Alert.alert('Success', 'Your account has been permanently deleted.');
 
         } catch (error) {
-            console.error('Error deleting account:', error);
+            console.error(' [DELETE UI] Error during deletion:', error);
+            console.error(' [DELETE UI] Error code:', error.code);
+            console.error(' [DELETE UI] Error message:', error.message);
+            
+            // Clear global flag on error
+            global.isDeletingAccount = false;
+            setIsDeletingAccount(false);
+            
             if (error.code === 'auth/wrong-password') {
                 setPasswordError('Incorrect password. Please try again.');
             } else if (error.code === 'auth/too-many-requests') {
                 setPasswordError('Too many failed attempts. Please try again later.');
+            } else if (error.code === 'auth/requires-recent-login') {
+                setPasswordError('Session expired. Please try again.');
             } else {
-                setPasswordError('Failed to delete account. Please try again.');
+                setPasswordError(error.message || 'Failed to delete account. Please try again.');
             }
         } finally {
             setIsLoading(false);

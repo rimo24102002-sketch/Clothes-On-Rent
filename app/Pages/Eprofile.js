@@ -4,8 +4,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { getCustomerProfile } from '../Helper/firebaseHelper';
+import { getCustomerProfile, getUserProfile } from '../Helper/firebaseHelper';
 import { logout } from '../Helper/firebaseHelper';
+import { setRole, setUser } from '../_redux/Slices/HomeDataSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -24,6 +25,7 @@ const Eprofile = () => {
 
     // UI state
     const [loading, setLoading] = useState(true);
+    const [switchingRole, setSwitchingRole] = useState(false);
 
     // Load profile data on component mount
     useEffect(() => {
@@ -92,25 +94,142 @@ const Eprofile = () => {
     // Handle logout
     const handleLogout = async () => {
         Alert.alert(
+            "Confirm Logout",
             "Are you sure you want to logout?",
             [
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Logout",
-                            onPress: async () => {
-                                try {
-                                    await logout();
-                                    // Redux will handle clearing user data
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await logout();
+                            // Show success popup then navigate
+                            Alert.alert(
+                                'Success',
+                                'You have been logged out successfully from your Customer account.',
+                                [
+                                    {
+                                        text: 'OK',
+                                        onPress: () => {
+                                            // Redux will handle clearing user data; navigate to Login
+                                            navigation.reset({
+                                                index: 0,
+                                                routes: [{ name: 'Login' }]
+                                            });
+                                        }
+                                    }
+                                ]
+                            );
+                        } catch (error) {
+                            console.error('Error logging out:', error);
+                            Alert.alert('Error', 'Failed to logout');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleSwitchToSeller = async () => {
+        // Check if user has seller role
+        if (user?.role !== 'Seller') {
+            Alert.alert(
+                'Not a Seller',
+                'You need to have a seller account to access seller features. Would you like to create a seller account?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Create Seller Account',
+                        onPress: () => {
+                            Alert.alert(
+                                'Contact Support',
+                                'Please contact support to upgrade your account to a seller account.',
+                                [{ text: 'OK' }]
+                            );
+                        }
+                    }
+                ]
+            );
+            return;
+        }
+
+        Alert.alert(
+            "Switch to Seller View",
+            "You will be switched to seller mode to manage your products and orders.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Switch",
+                    onPress: async () => {
+                        setSwitchingRole(true);
+                        try {
+                            console.log('🔄 Switching from Customer to Seller...');
+                            
+                            // Fetch fresh user data from Firebase
+                            const userData = await getUserProfile(user.uid);
+                            
+                            if (userData) {
+                                console.log('✅ User data fetched:', userData);
+                                
+                                // Check seller status
+                                if (userData.status === 'pending') {
+                                    // Seller is pending approval
+                                    dispatch(setRole('pending'));
+                                    dispatch(setUser({
+                                        ...userData,
+                                        currentView: 'Seller'
+                                    }));
+                                    
                                     navigation.reset({
                                         index: 0,
-                                        routes: [{ name: 'Login' }]
+                                        routes: [{ name: 'PendingApproval' }],
                                     });
-                                } catch (error) {
-                                    console.error('Error logging out:', error);
-                                    Alert.alert('Error', 'Failed to logout');
+                                    
+                                    Alert.alert(
+                                        'Pending Approval',
+                                        'Your seller account is awaiting admin approval. You will be notified once approved.'
+                                    );
+                                } else {
+                                    // Seller is approved
+                                    dispatch(setRole('Seller'));
+                                    dispatch(setUser({
+                                        ...userData,
+                                        currentView: 'Seller'
+                                    }));
+                                    
+                                    console.log('✅ Redux updated with Seller role');
+                                    
+                                    // Navigate to Seller bottom tabs
+                                    navigation.reset({
+                                        index: 0,
+                                        routes: [{ name: 'BottomTabSeller' }],
+                                    });
+                                    
+                                    console.log('✅ Navigated to Seller view');
+                                    
+                                    // Show success message
+                                    setTimeout(() => {
+                                        Alert.alert(
+                                            'Switched Successfully',
+                                            'You are now in Seller mode. Manage your products and orders!'
+                                        );
+                                    }, 500);
                                 }
+                            } else {
+                                throw new Error('Failed to fetch user data');
                             }
+                        } catch (error) {
+                            console.error('❌ Error switching role:', error);
+                            Alert.alert(
+                                'Switch Failed',
+                                'Failed to switch to seller view. Please try again.'
+                            );
+                        } finally {
+                            setSwitchingRole(false);
                         }
+                    }
+                }
             ]
         );
     };
@@ -300,7 +419,7 @@ const Eprofile = () => {
                             borderBottomWidth: 1,
                             borderBottomColor: '#f0f0f0'
                         }}
-                        onPress={() => navigation.navigate('CPending')}
+                        onPress={() => navigation.navigate('MyOrders')}
                     >
                         <View style={{
                             width: 45,
@@ -623,12 +742,14 @@ const Eprofile = () => {
                     marginBottom: 30
                 }}>
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('Profiles')}
+                        onPress={handleSwitchToSeller}
+                        disabled={switchingRole}
                         style={{
                             flexDirection: "row",
                             alignItems: "center",
                             padding: 20,
-                            backgroundColor: '#8E6652'
+                            backgroundColor: switchingRole ? '#A07B6B' : '#8E6652',
+                            opacity: switchingRole ? 0.7 : 1
                         }}
                     >
                         <View style={{
@@ -640,7 +761,11 @@ const Eprofile = () => {
                             justifyContent: 'center',
                             marginRight: 15
                         }}>
-                            <Ionicons name="swap-horizontal" size={22} color="#8E6652" />
+                            {switchingRole ? (
+                                <ActivityIndicator size="small" color="#8E6652" />
+                            ) : (
+                                <Ionicons name="swap-horizontal" size={22} color="#8E6652" />
+                            )}
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={{
@@ -648,7 +773,7 @@ const Eprofile = () => {
                                 fontWeight: 'bold',
                                 color: "#fff"
                             }}>
-                                Switch to Seller View
+                                {switchingRole ? 'Switching...' : 'Switch to Seller View'}
                             </Text>
                             <Text style={{
                                 fontSize: 12,

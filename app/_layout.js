@@ -1,10 +1,17 @@
 // Core React/React Native imports
+import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, SafeAreaView } from "react-native";
-import { Provider, useSelector } from "react-redux";
+import { Provider, useSelector, useDispatch } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { persistor, store } from "./redux/store/Index";
+import { persistor, store } from "./_redux/store/Index";
+import { auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { setUser, setRole, setName } from './_redux/Slices/HomeDataSlice';
+import { getUserProfile } from './Helper/firebaseHelper';
+import Profile from './Pages/Profile';
+import ViewProduct from './Pages/ViewProduct';
 
 // Redux and Navigation setup
 const Stack = createNativeStackNavigator();
@@ -41,6 +48,8 @@ import Checkout from './Pages/Checkout';
 import Complain from './Pages/Complain'; 
 import CPending from './Pages/CPending';
 import CReview from './Pages/CReview';
+import ReviewsList from './Pages/ReviewsList';
+import MyOrders from './Pages/MyOrders';
 import CustomerComplaint from './Pages/CustomerComplaint';
 import Delivered from './Pages/Delivered';
 import Detail from './Pages/Detail';
@@ -73,7 +82,6 @@ const SellerStack = () => {
         headerBackTitleVisible: false,
       }}
     >
-    <Stack.Screen name="Splash" component={Splash} options={{ headerShown: false }} />
     <Stack.Screen name="BottomTabSeller" component={BottomTabSeller} options={{ headerShown: false }} />
     <Stack.Screen name="Home" component={Home}  />
     <Stack.Screen name="Password" component={Password}  />
@@ -96,6 +104,8 @@ const SellerStack = () => {
     <Stack.Screen name="NotificationSettings" component={NotificationSettings}/>
     <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
     <Stack.Screen name="OrderApproval" component={OrderApproval} options={{ headerShown: false }} />
+    <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+    <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
   </Stack.Navigator>
   );
 };
@@ -116,51 +126,134 @@ const PendingStack = () => {
       }}
     >
       <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
+      <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+      <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };
 
 const CustomerStack = () => (
   <Stack.Navigator initialRouteName="BottomTab">
+    {/* Main Bottom Tab Navigator - MUST be first as initialRouteName */}
+    <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
+    
+    {/* Customer Profile Screens */}
     <Stack.Screen name="Profiles" component={Profiles} options={{ headerShown: false }} />
     <Stack.Screen name="EProfile" component={EProfile} options={{ headerShown: false }} />
     <Stack.Screen name="CReview" component={CReview} options={{ headerShown: false }} />
+    <Stack.Screen name="ReviewsList" component={ReviewsList} options={{ headerShown: false }} />
+    <Stack.Screen name="MyOrders" component={MyOrders} options={{ headerShown: false }} />
+    
+    {/* Product & Order Screens */}
     <Stack.Screen name="ProductDetail" component={ProductDetail} options={{ headerShown: false }} />
+    <Stack.Screen name="Order" component={Order} options={{ headerShown: false }} />
     <Stack.Screen name="OrderDetail" component={OrderDetail} options={{ headerShown: false }} />
     <Stack.Screen name="CPending" component={CPending} options={{ headerShown: false }} />
     <Stack.Screen name="Cancel" component={Cancel} options={{ headerShown: false }} />
-    <Stack.Screen name="Cart" component={Cart} options={{ headerShown: false }} />
-    <Stack.Screen name="Checkout" component={Checkout} options={{ headerShown: false }} />
-    <Stack.Screen name="Complain" component={Complain} options={{ headerShown: false }} />
-    <Stack.Screen name="CustomerComplaint" component={CustomerComplaint} options={{ headerShown: false }} />
     <Stack.Screen name="Delivered" component={Delivered} options={{ headerShown: false }} />
     <Stack.Screen name="Detail" component={Detail} options={{ headerShown: false }} />
+    
+    {/* Shopping Screens */}
+    <Stack.Screen name="Cart" component={Cart} options={{ headerShown: false }} />
+    <Stack.Screen name="Checkout" component={Checkout} options={{ headerShown: false }} />
+    <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false }} />
+    
+    {/* Category & Browse Screens */}
     <Stack.Screen name="Home2" component={Home2} options={{ headerShown: false }} />
     <Stack.Screen name="VTO" component={VTO} options={{ headerShown: false }} />
     <Stack.Screen name="Homestack" component={Homestack} options={{ headerShown: false }} />
     <Stack.Screen name="Mhndi" component={Mhndi} options={{ headerShown: false }} />
-    <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false }} />
     <Stack.Screen name="Category" component={CategoryPage} options={{ headerShown: false }} />
+    
+    {/* Support & Settings Screens */}
+    <Stack.Screen name="Complain" component={Complain} options={{ headerShown: false }} />
+    <Stack.Screen name="CustomerComplaint" component={CustomerComplaint} options={{ headerShown: false }} />
+    <Stack.Screen name="HelpCenter" component={HelpCenter} options={{ headerShown: false }} />
     <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{ headerShown: false }} />
     <Stack.Screen name="TermsOfService" component={TermsOfService} options={{ headerShown: false }} />
     <Stack.Screen name="AccountSetting" component={AccountSetting} options={{ headerShown: false }} />
+    <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
+    
+    {/* Account Management Screens */}
     <Stack.Screen name="Password" component={Password} options={{ headerShown: false }} />
     <Stack.Screen name="Delete" component={Delete} options={{ headerShown: false }} />
     <Stack.Screen name="Logout" component={Logout} options={{ headerShown: false }} />
+    
+    {/* Auth Screens (for switching accounts) */}
     <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
     <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
-    <Stack.Screen name="HelpCenter" component={HelpCenter} options={{ headerShown: false }} />
-    <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ headerShown: false }} />
-    <Stack.Screen name="BottomTab" component={BottomTab} options={{ headerShown: false }} />
 
   </Stack.Navigator>
 );
 
 const RenderStack = () => {
+  const dispatch = useDispatch();
   const role = useSelector((state) => state.home.role);
   const user = useSelector((state) => state.home.user);
+  const [authChecking, setAuthChecking] = useState(true);
 
-  alert (role)
+  
+    // alert (user);
+
+  // Firebase Auth State Listener - Syncs Firebase auth with Redux
+  useEffect(() => {
+    console.log('🔥 Setting up Firebase auth listener...');
+    
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🔥 Auth state changed:', firebaseUser ? 'User logged in' : 'User logged out');
+      
+      // Check if account deletion is in progress (global flag)
+      if (global.isDeletingAccount) {
+        console.log('🚫 Account deletion in progress - skipping auth state update');
+        return;
+      }
+      
+      if (firebaseUser) {
+        // User is signed in - fetch their profile data
+        try {
+          console.log('📥 Fetching user profile for UID:', firebaseUser.uid);
+          const userData = await getUserProfile(firebaseUser.uid);
+          
+          if (userData) {
+            console.log('✅ User data loaded:', userData.role, userData.name);
+            dispatch(setUser(userData));
+            dispatch(setRole(userData.role || ''));
+            dispatch(setName(userData.name || ''));
+          } else {
+            console.warn('⚠️ No user data found in Firestore');
+          }
+        } catch (error) {
+          console.error('❌ Error fetching user profile:', error);
+        }
+      } else {
+        // User is signed out - clear Redux state
+        console.log('🧹 Clearing Redux state - user logged out');
+        dispatch(setUser({}));
+        dispatch(setRole(''));
+        dispatch(setName(''));
+      }
+      
+      setAuthChecking(false);
+    });
+
+    // Cleanup listener on unmount
+    return () => {
+      console.log('🔥 Cleaning up Firebase auth listener');
+      unsubscribe();
+    };
+  }, [dispatch]);
+
+  // Show loading while checking auth state
+  if (authChecking) {
+    console.log('⏳ Checking authentication state...');
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1DCD1' }}>
+        <ActivityIndicator size="large" color="#8E6652" />
+        <Text style={{ marginTop: 10, color: '#8E6652', fontWeight: '600' }}>Loading...</Text>
+      </View>
+    );
+  }
   
   console.log('=== RenderStack Debug ===');
   console.log('RenderStack - Role:', role);
@@ -172,17 +265,56 @@ const RenderStack = () => {
   if (user?.uid && !role) {
     console.log('User exists but role is empty, waiting...');
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1DCD1' }}>
         <ActivityIndicator size="large" color="#8E6652" />
-        <Text style={{ marginTop: 10 }}>Loading...</Text>
+        <Text style={{ marginTop: 10, color: '#8E6652', fontWeight: '600' }}>Loading...</Text>
       </View>
     );
   }
 
-  // Force customer mode for testing
-  const forceRole = "Customer";
+  // 🔒 AUTHENTICATION ENFORCEMENT: Only allow access to auth screens when not logged in
+  if (!user?.uid) {
+    console.log('🔒 User not authenticated - showing auth stack only');
+    return (
+      <Stack.Navigator 
+        initialRouteName="Splash"
+        screenOptions={{
+          headerShown: false,
+          headerBackTitleVisible: false,
+        }}
+      >
+        <Stack.Screen 
+          name="Splash" 
+          component={Splash} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Home" 
+          component={Home} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Login" 
+          component={Login} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="SignUp" 
+          component={SignUp} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="ForgotPassword" 
+          component={ForgotPassword} 
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    );
+  }
   
-  switch (forceRole) {
+  // If user is logged in, use their role to determine the stack
+  switch (role) {
+
     case "Seller":
       // Approved sellers go to seller stack
       console.log('Rendering SellerStack for approved seller');
@@ -195,13 +327,22 @@ const RenderStack = () => {
       console.log('Rendering CustomerStack for customer');
       return <CustomerStack key="customer-stack" />;
     default:
-      console.log('Rendering auth stack - no role or user');
+      // 🔒 Fallback: If role is unrecognized, redirect to auth stack
+      console.log('⚠️ Unrecognized role or missing role - redirecting to Home');
       return (
-        <Stack.Navigator key="auth-stack" initialRouteName="Login">
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="SignUp" component={SignUp} />
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Navigator 
+          key="auth-stack" 
+          initialRouteName="Splash"
+          screenOptions={{
+            headerShown: false,
+            headerBackTitleVisible: false,
+          }}
+        >
+          <Stack.Screen name="Splash" component={Splash} options={{ headerShown: false }} />
+          <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+          <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
         </Stack.Navigator>
       );
   }
@@ -210,9 +351,11 @@ const App = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-          <RenderStack key="main-render-stack" />
-        </SafeAreaView>
+        <NavigationContainer>
+          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+            <RenderStack key="main-render-stack" />
+          </SafeAreaView>
+        </NavigationContainer>
       </PersistGate>
     </Provider>
   );

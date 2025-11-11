@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator, TextInput, Dimensions } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { changePassword } from '../Helper/firebaseHelper';
 
 const { width } = Dimensions.get('window');

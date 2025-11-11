@@ -1,13 +1,18 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { View, Text } from 'react-native';
+import { useSelector } from 'react-redux';
 import EProfile from './Eprofile';
 import Cart from './Cart';
 import HomeStack from './Homestack';
-import CReview from './CReview';
+import ReviewsList from './ReviewsList';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTab() {
+    const cartItems = useSelector((state) => state.home.cart || []);
+    const cartCount = cartItems.length;
+
     return (
         <Tab.Navigator
             screenOptions={{
@@ -52,8 +57,33 @@ export default function BottomTab() {
                 component={Cart}
                 options={{
                     tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="cart-outline" size={size} color={color} />
+                        <View>
+                            <Ionicons name="cart-outline" size={size} color={color} />
+                            {cartCount > 0 && (
+                                <View style={{
+                                    position: 'absolute',
+                                    right: -8,
+                                    top: -4,
+                                    backgroundColor: '#FF4444',
+                                    borderRadius: 10,
+                                    minWidth: 18,
+                                    height: 18,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    paddingHorizontal: 4
+                                }}>
+                                    <Text style={{
+                                        color: 'white',
+                                        fontSize: 10,
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {cartCount > 99 ? '99+' : cartCount}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
                     ),
+                    tabBarBadge: cartCount > 0 ? cartCount : null,
                 }}
             />
             <Tab.Screen
@@ -66,12 +96,13 @@ export default function BottomTab() {
                 }}
             />
             <Tab.Screen
-                name="Review"
-                component={CReview}
+                name="Reviews"
+                component={ReviewsList}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="rate-review" size={size - 2} color={color} />
                     ),
+                    tabBarLabel: 'Reviews'
                 }}
             />
         </Tab.Navigator>

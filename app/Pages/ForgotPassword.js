@@ -1,13 +1,32 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { forgotPassword } from "../Helper/firebaseHelper";
+import { Ionicons } from '@expo/vector-icons';
 
 const Password = ({navigation}) => {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     return (
         <View style={{ height: "100%", width: "100%", backgroundColor: "#ffffffff" }}>
-            <Text style={{ fontSize: 22, fontWeight: "700", color: "#000000ff", marginTop: 20, marginStart: 20 }}>Forgot password</Text>
+            {/* Header with Back Button */}
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    style={styles.backButton}
+                    onPress={() => {
+                        if (navigation?.canGoBack && navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('Login');
+                        }
+                    }}
+                >
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Forgot Password</Text>
+                <View style={styles.headerRight} />
+            </View>
+
+            <Text style={{ fontSize: 22, fontWeight: "700", color: "#000000ff", marginTop: 20, marginStart: 20 }}>Reset Your Password</Text>
             <Text style={{ color: "#000000ff", marginTop: 10, marginStart: 15 }} >  Enter your registered email to reset your password.</Text>
             <TextInput
                 placeholder="Enter your email"
@@ -39,5 +58,35 @@ const Password = ({navigation}) => {
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#8E6652',
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    backButton: {
+        padding: 8,
+        width: 40,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+        flex: 1,
+        textAlign: 'center',
+    },
+    headerRight: {
+        width: 40,
+    },
+});
 
 export default Password;

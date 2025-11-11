@@ -1,17 +1,20 @@
 import React, { useState } from "react";
-import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, TextInput, Image, Modal, Alert } from "react-native";
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, TextInput, Image, Modal, Alert, ActivityIndicator } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useSelector } from "react-redux";
-import { updateData, uploadImageToCloudinary } from "../Helper/firebaseHelper";
+import { useSelector, useDispatch } from "react-redux";
+import { updateData, uploadImageToCloudinary, getUserProfile } from "../Helper/firebaseHelper";
+import { setRole, setUser } from '../_redux/Slices/HomeDataSlice';
 
 export default function Profile({ navigation }) {
   const user = useSelector((state) => state.home.user);
+  const dispatch = useDispatch();
 
   const [name, setName] = useState(user?.name || "User Name");
   const [shopName, setShopName] = useState(user?.shopName || "Your Shop");
   const [imageUrl, setImageUrl] = useState(user?.profileImage || null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
 
   const showImageOptions = () => setShowImageModal(true);
 
@@ -110,6 +113,67 @@ export default function Profile({ navigation }) {
     );
   };
 
+  const handleSwitchToCustomer = async () => {
+    Alert.alert(
+      "Switch to Customer View",
+      "You will be switched to customer mode. You can switch back to seller mode anytime from your customer profile.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Switch",
+          onPress: async () => {
+            setSwitchingRole(true);
+            try {
+              console.log('🔄 Switching from Seller to Customer...');
+              
+              // Fetch fresh user data from Firebase
+              const userData = await getUserProfile(user.uid);
+              
+              if (userData) {
+                console.log('✅ User data fetched:', userData);
+                
+                // Update Redux with Customer role
+                dispatch(setRole('Customer'));
+                dispatch(setUser({
+                  ...userData,
+                  currentView: 'Customer' // Track current view
+                }));
+                
+                console.log('✅ Redux updated with Customer role');
+                
+                // Navigate to Customer bottom tabs
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'BottomTab' }],
+                });
+                
+                console.log('✅ Navigated to Customer view');
+                
+                // Show success message
+                setTimeout(() => {
+                  Alert.alert(
+                    'Switched Successfully',
+                    'You are now in Customer mode. Browse and rent amazing outfits!'
+                  );
+                }, 500);
+              } else {
+                throw new Error('Failed to fetch user data');
+              }
+            } catch (error) {
+              console.error('❌ Error switching role:', error);
+              Alert.alert(
+                'Switch Failed',
+                'Failed to switch to customer view. Please try again.'
+              );
+            } finally {
+              setSwitchingRole(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={{flex:1,backgroundColor:"#F1DCD1"}}>
       <ScrollView contentContainerStyle={{paddingBottom:20}}>
@@ -178,9 +242,28 @@ export default function Profile({ navigation }) {
 
         {/* Action Buttons */}
         <View style={{paddingHorizontal:24,marginTop:24,gap:16}}>
-          <TouchableOpacity style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",backgroundColor:"#F8F8F8",borderWidth:1,borderColor:"#E0E0E0",padding:16,borderRadius:12}} onPress={() => navigation.navigate("Home")}>
-            <Feather name="user" size={20} color="#666" />
-            <Text style={{color:"#666",fontSize:16,fontWeight:"600",marginLeft:10,flex:1}}>Switch to Customer View</Text>
+          <TouchableOpacity 
+            style={{
+              flexDirection:"row",
+              alignItems:"center",
+              justifyContent:"space-between",
+              backgroundColor: switchingRole ? "#E0E0E0" : "#F8F8F8",
+              borderWidth:1,
+              borderColor:"#E0E0E0",
+              padding:16,
+              borderRadius:12
+            }} 
+            onPress={handleSwitchToCustomer}
+            disabled={switchingRole}
+          >
+            {switchingRole ? (
+              <ActivityIndicator size="small" color="#8E6652" style={{marginRight: 10}} />
+            ) : (
+              <Feather name="user" size={20} color="#666" />
+            )}
+            <Text style={{color:"#666",fontSize:16,fontWeight:"600",marginLeft:10,flex:1}}>
+              {switchingRole ? "Switching..." : "Switch to Customer View"}
+            </Text>
             <Feather name="chevron-right" size={18} color="#666" />
           </TouchableOpacity>
         </View>

@@ -12,6 +12,7 @@ import Order from './Order';
 import Reviews from './Reviews';
 import Complain from './Complain';
 import CPending from './CPending';
+import CategoryPage from './CategoryPage';
 const Stack = createNativeStackNavigator();
 
 const HomeStack = () => {
@@ -21,6 +22,7 @@ const HomeStack = () => {
       <Stack.Navigator initialRouteName="Home2">
         <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="Home2" options={{ headerShown: false }} component={Home2} />
+        <Stack.Screen name="Category" component={CategoryPage} options={{ headerShown: false }} />
         <Stack.Screen name="Mhndi" component={Mhndi} />
         {/* <Stack.Screen name="Detail" component={Detail} /> */}
         <Stack.Screen name="VTO" component={VTO} />
@@ -30,8 +32,7 @@ const HomeStack = () => {
         <Stack.Screen name="Order" component={Order} />
         <Stack.Screen name="Reviews" component={Reviews} />
         <Stack.Screen name="Complain" component={Complain} />
- <Stack.Screen name="CPending" component={CPending} />
-
+        <Stack.Screen name="CPending" component={CPending} />
 
       </Stack.Navigator>
     </SafeAreaView>

@@ -221,13 +221,21 @@ const CReview = ({ route }) => {
         'Thank you for your review!',
         [
           {
-            text: 'OK',
+            text: 'View All Reviews',
+            onPress: () => {
+              // Navigate to reviews list
+              navigation.navigate('ReviewsList', { productId });
+            }
+          },
+          {
+            text: 'Write Another',
             onPress: () => {
               // Reset form
               setRating(0);
               setReviewText('');
               setReviewImages([]);
-            }
+            },
+            style: 'cancel'
           }
         ]
       );
@@ -305,7 +313,7 @@ const CReview = ({ route }) => {
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Write a Review</Text>

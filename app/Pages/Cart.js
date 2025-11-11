@@ -1,13 +1,19 @@
 import { View, Text, ScrollView, Image, TouchableOpacity, TextInput, Alert } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSelector, useDispatch } from 'react-redux';
-import { removeFromCart, updateCartItem, clearCart } from '../redux/Slices/HomeDataSlice';
+import { removeFromCart, updateCartItem, clearCart } from '../_redux/Slices/HomeDataSlice';
 import { saveCartToFirebase, clearCartFromFirebase } from '../Helper/firebaseHelper';
 
 const Cart = ({ navigation }) => {
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.home.cart || []);
+    const user = useSelector((state) => state.home.user);
+
+    useEffect(() => {
+        console.log('🛒 Cart page loaded - Items count:', cartItems.length);
+        console.log('🛒 Cart items:', cartItems);
+    }, [cartItems]);
 
     const updateQuantity = async (itemId, newQuantity) => {
         if (newQuantity <= 0) {
@@ -16,12 +22,18 @@ const Cart = ({ navigation }) => {
             dispatch(updateCartItem({ id: itemId, updates: { quantity: newQuantity } }));
         }
 
-        // Save to Firebase
-        const user = useSelector((state) => state.home.user);
+        // Save to Firebase after state update
         if (user?.uid) {
-            const updatedCart = useSelector((state) => state.home.cart);
             try {
-                await saveCartToFirebase(user.uid, updatedCart);
+                // Get updated cart from Redux after dispatch
+                setTimeout(async () => {
+                    const currentCart = cartItems.filter(item => item.id !== itemId || newQuantity > 0);
+                    if (newQuantity > 0) {
+                        const updatedItem = currentCart.find(item => item.id === itemId);
+                        if (updatedItem) updatedItem.quantity = newQuantity;
+                    }
+                    await saveCartToFirebase(user.uid, currentCart);
+                }, 100);
             } catch (error) {
                 console.error('Error saving cart to Firebase:', error);
             }
@@ -39,12 +51,13 @@ const Cart = ({ navigation }) => {
                     onPress: async () => {
                         dispatch(removeFromCart(itemId));
 
-                        // Save to Firebase
-                        const user = useSelector((state) => state.home.user);
+                        // Save to Firebase after removal
                         if (user?.uid) {
-                            const updatedCart = useSelector((state) => state.home.cart);
                             try {
-                                await saveCartToFirebase(user.uid, updatedCart);
+                                setTimeout(async () => {
+                                    const updatedCart = cartItems.filter(item => item.id !== itemId);
+                                    await saveCartToFirebase(user.uid, updatedCart);
+                                }, 100);
                             } catch (error) {
                                 console.error('Error saving cart to Firebase:', error);
                             }

@@ -1,5 +1,5 @@
-import Splash from './Pages/Splash';
+import App from './_layout';
 
 export default function Index() {
-  return <Splash />;
+  return <App />;
 }

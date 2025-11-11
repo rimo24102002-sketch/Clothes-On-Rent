@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { getDataById, logout } from '../Helper/firebaseHelper';
-import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
+import { setRole, setUser } from '../_redux/Slices/HomeDataSlice';
 
 const PendingApproval = ({ navigation }) => {
   const user = useSelector((state) => state.home.user);

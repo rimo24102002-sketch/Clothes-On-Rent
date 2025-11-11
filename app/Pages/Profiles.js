@@ -16,11 +16,9 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import {
   getCustomerProfile,
   updateCustomerProfile,
-  uploadCustomerProfileImage,
-  deleteCustomerProfileImage,
   uploadImageToCloudinary
 } from '../Helper/firebaseHelper';
-import { setUser } from '../redux/Slices/HomeDataSlice';
+import { setUser } from '../_redux/Slices/HomeDataSlice';
 import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
@@ -116,7 +114,8 @@ const Profiles = ({ navigation }) => {
       const uploadedUrl = await uploadImageToCloudinary(pickedImage.uri);
 
       if (uploadedUrl && user?.uid) {
-        await uploadCustomerProfileImage(user.uid, uploadedUrl);
+        // Save Cloudinary URL directly to Firestore profile
+        await updateCustomerProfile(user.uid, { profileImageUrl: uploadedUrl });
         setProfileData((prev) => ({ ...prev, profileImageUrl: uploadedUrl }));
         Alert.alert('Success', 'Profile image updated successfully!');
       }

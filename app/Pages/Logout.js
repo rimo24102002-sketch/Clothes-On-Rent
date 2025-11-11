@@ -2,64 +2,126 @@ import { Feather, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../Helper/firebaseHelper';
-import { setRole, setUser } from '../redux/Slices/HomeDataSlice';
+import { setRole, setUser, setName, setSelectedRole, clearCart } from '../_redux/Slices/HomeDataSlice';
+import { auth } from '../../firebase';
+import { signOut } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persistor } from '../_redux/store/Index';
+
+const { width } = Dimensions.get('window');
 
 
 export default function Logout({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
   const user = useSelector(state => state.home.user);
+  const userRole = useSelector(state => state.home.role);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Confirm Logout',
       `Are you sure you want to logout, ${user?.name || 'User'}?`,
       [
         {
-          text: 'Stay Logged In',
-          style: 'cancel',
-          onPress: () => navigation.goBack()
+          text: 'Cancel',
+          style: 'cancel'
         },
         {
           text: 'Logout',
           style: 'destructive',
           onPress: async () => {
-            setIsLoading(true);
             try {
-              // Firebase logout
-              await logout();
+              setIsLoading(true);
+              console.log('🚺 Starting logout process...');
 
-              // Clear Redux state
+              // Step 1: Sign out from Firebase Auth
+              console.log('🔥 Signing out from Firebase...');
+              await signOut(auth);
+              
+              // Verify Firebase sign-out
+              const isSignedOut = auth.currentUser === null;
+              console.log('✅ Firebase signOut complete - currentUser is null:', isSignedOut);
+
+              // Step 2: Clear all Redux state
+              console.log('🧹 Clearing Redux state...');
               dispatch(setUser({}));
+              dispatch(setName(''));
               dispatch(setRole(''));
+              dispatch(setSelectedRole(''));
+              dispatch(clearCart());
 
-              // Navigate to login page - use replace instead of reset for React Navigation v6+
-              navigation.replace('Login');
+              // Step 3: Wait for state to propagate
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              console.log('✅ Logout complete!');
 
-              // Show success message after navigation
-              setTimeout(() => {
-                Alert.alert('Success', 'You have been logged out successfully.');
-              }, 100);
+              // Hide loading before showing success alert
+              setIsLoading(false);
+
+              // Show success alert with role-specific message
+              const logoutMessage = userRole === 'Seller' 
+                ? "You're logged out of your Seller account. Your shop dashboard, listings, and seller data remain safe — log back in anytime to resume. If you want to delete your seller account permanently, contact support."
+                : "You're logged out of your Customer account. Your rentals, order history and preferences are saved — sign back in anytime to continue. Want to delete your account? Visit Settings → Delete Account.";
+
+              Alert.alert(
+                'Logged Out Successfully',
+                logoutMessage,
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Navigate to Home screen (not Login) - users can choose their path from there
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Home' }],
+                      });
+                      console.log('🏠 Navigated to Home screen after logout');
+                    }
+                  }
+                ]
+              );
 
             } catch (error) {
-              console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            } finally {
+              console.error('❌ Logout error:', error);
               setIsLoading(false);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           }
         }
       ]
     );
   };
-
+  
   const handleCancel = () => {
     navigation.goBack();
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F1DCD1' }}>
+      {isLoading && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          zIndex: 1000,
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            padding: 24,
+            borderRadius: 12,
+            alignItems: 'center',
+            elevation: 6
+          }}>
+            <ActivityIndicator size="large" color="#8E6652" />
+            <Text style={{ marginTop: 12, color: '#8E6652', fontWeight: '600' }}>Signing out...</Text>
+          </View>
+        </View>
+      )}
       {/* Professional Header */}
       <View style={{
         backgroundColor: '#8E6652',
@@ -87,7 +149,7 @@ export default function Logout({ navigation }) {
       </View>
 
       <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20, alignItems: 'center' }}>
-        {/* Enhanced Logout Icon */}
+        {/* Logout Icon */}
         <View style={{
           marginBottom: 30,
           alignItems: 'center'
@@ -111,7 +173,7 @@ export default function Logout({ navigation }) {
           </View>
         </View>
 
-        {/* Enhanced User Info Card */}
+        {/* User Info Card */}
         <View style={{
           backgroundColor: '#fff',
           padding: 25,
@@ -181,12 +243,12 @@ export default function Logout({ navigation }) {
               fontWeight: '600',
               textTransform: 'uppercase'
             }}>
-              {user?.role || 'Customer'}
+              {userRole === 'seller' ? 'Seller Account' : 'Customer Account'}
             </Text>
           </View>
         </View>
 
-        {/* Enhanced Logout Message */}
+        {/* Logout Message */}
         <View style={{
           backgroundColor: '#fff',
           borderRadius: 15,

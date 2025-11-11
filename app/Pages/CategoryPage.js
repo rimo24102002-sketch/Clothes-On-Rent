@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { addToCart } from '../redux/Slices/HomeDataSlice';
+import { addToCart } from '../_redux/Slices/HomeDataSlice';
 import { saveCartToFirebase } from '../Helper/firebaseHelper';
 import { getProductsByCategoryName, getCategories } from '../Helper/firebaseHelper';
 

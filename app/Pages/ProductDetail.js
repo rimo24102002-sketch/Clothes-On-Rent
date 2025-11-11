@@ -11,7 +11,9 @@ import {
   TextInput,
   Dimensions
 } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { addToCart } from '../_redux/Slices/HomeDataSlice';
+import { saveCartToFirebase } from '../Helper/firebaseHelper';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getDataById, createOrder, getCustomerProfile } from '../Helper/firebaseHelper';
@@ -20,8 +22,10 @@ const { width } = Dimensions.get('window');
 
 export default function ProductDetail({ route }) {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const { productId } = route.params;
   const user = useSelector((state) => state.home.user);
+  const cartItems = useSelector((state) => state.home.cart || []);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -50,7 +54,7 @@ export default function ProductDetail({ route }) {
     } catch (error) {
       console.error('Error loading product:', error);
       Alert.alert('Error', 'Failed to load product details');
-      router.back();
+      navigation.goBack();
     } finally {
       setLoading(false);
     }
@@ -81,13 +85,10 @@ export default function ProductDetail({ route }) {
       return;
     }
 
-    navigation.push({
-      pathname: '/CReview',
-      params: {
-        productId: product.id,
-        productName: product.name,
-        productImage: product.imageUrl
-      }
+    navigation.navigate('CReview', {
+      productId: product.id,
+      productName: product.name,
+      productImage: product.imageUrl
     });
   };
 
@@ -97,12 +98,7 @@ export default function ProductDetail({ route }) {
       return;
     }
 
-    if (!address.trim()) {
-      setAddressModalVisible(true);
-      return;
-    }
-
-    // Check if user is logged in and has uid
+    // Check if user is logged in
     if (!user?.uid) {
       Alert.alert('Error', 'Please log in to add items to cart');
       return;
@@ -111,40 +107,50 @@ export default function ProductDetail({ route }) {
     try {
       setAddingToCart(true);
 
-      const orderData = {
-        customerId: user.uid,
-        customerEmail: user.email,
-        customerName: `${customerProfile?.firstName || ''} ${customerProfile?.lastName || ''}`.trim(),
-        sellerId: product.sellerId || product.uid, // Add seller ID for order approval
+      // Create cart item object
+      const cartItem = {
+        id: `${product.id}_${selectedSize}_${Date.now()}`, // Unique ID for cart item
         productId: product.id,
-        productName: product.name,
-        productImage: product.imageUrl,
+        name: product.name,
+        imageUrl: product.imageUrl,
+        price: parseFloat(product.price),
+        securityFee: parseFloat(product.securityFee || 0),
+        size: selectedSize,
+        quantity: quantity,
+        sellerId: product.sellerId || product.uid,
         categoryId: product.categoryId,
         categoryName: product.categoryName,
-        quantity: quantity,
-        size: selectedSize,
-        price: parseFloat(product.price),
-        totalAmount: parseFloat(product.price) * quantity,
-        address: address.trim(),
-        status: 'pending',
-        orderDate: new Date().toISOString(),
-        createdAt: Date.now()
+        addedAt: Date.now()
       };
 
-      const orderId = await createOrder(orderData);
+      // Add to Redux cart
+      console.log('➕ Adding item to cart:', cartItem);
+      dispatch(addToCart(cartItem));
+
+      // Save to Firebase
+      const updatedCart = [...cartItems, cartItem];
+      console.log('💾 Saving cart to Firebase. Total items:', updatedCart.length);
+      await saveCartToFirebase(user.uid, updatedCart);
+      console.log('✅ Cart saved successfully');
 
       Alert.alert(
-        'Success',
-        'Product added to cart successfully!',
+        'Added to Cart',
+        `${product.name} (${selectedSize}) has been added to your cart!`,
         [
           { text: 'Continue Shopping', style: 'cancel' },
-          { text: 'View Cart', onPress: () => router.push('/Cart') }
+          { 
+            text: 'View Cart', 
+            onPress: () => {
+              // Navigate to BottomTab and select Cart tab
+              navigation.navigate('BottomTab', { screen: 'Cart' });
+            }
+          }
         ]
       );
 
     } catch (error) {
       console.error('Error adding to cart:', error);
-      Alert.alert('Error', 'Failed to add product to cart');
+      Alert.alert('Error', 'Failed to add product to cart. Please try again.');
     } finally {
       setAddingToCart(false);
     }
@@ -173,7 +179,7 @@ export default function ProductDetail({ route }) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1DCD1' }}>
         <Text style={{ color: '#8E6652', fontSize: 18 }}>Product not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20 }}>
           <Text style={{ color: '#8E6652', fontSize: 16 }}>Go Back</Text>
         </TouchableOpacity>
       </View>

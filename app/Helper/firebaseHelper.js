@@ -20,6 +20,10 @@ export const addData = async (collectionName, data) => {
 // ✅ Get all data
 export const getAllData = async (collectionName) => {
     try {
+        if (!collectionName) {
+            console.error("getAllData: collectionName is required");
+            return [];
+        }
         const querySnapshot = await getDocs(collection(db, collectionName));
         const data = [];
         querySnapshot.forEach((doc) => {
@@ -27,23 +31,29 @@ export const getAllData = async (collectionName) => {
         });
         return data;
     } catch (e) {
-        console.error("Error getting documents: ", e);
+        console.error("Error getting documents from", collectionName, ":", e);
+        return []; // Return empty array instead of undefined
     }
 };
 
 // ✅ Get single document
 export const getDataById = async (collectionName, id) => {
     try {
+        if (!collectionName || !id) {
+            console.error("getDataById: collectionName and id are required");
+            return null;
+        }
         const docRef = doc(db, collectionName, id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() };
         } else {
-            console.log("No such document!");
+            console.log("No such document in", collectionName, "with id:", id);
             return null;
         }
     } catch (e) {
-        console.error("Error getting docouments: ", e);
+        console.error("Error getting document from", collectionName, "with id", id, ":", e);
+        return null; // Return null instead of undefined on error
     }
 };
 
@@ -202,7 +212,85 @@ export const logout = async () => {
     }
 };
 
-// ✅ Delete Account
+// ✅ Re-authenticate User (required before sensitive operations)
+export const reauthenticateUser = async (email, password) => {
+    try {
+        console.log('🔐 [REAUTH] Starting re-authentication for:', email);
+        
+        const user = auth.currentUser;
+        if (!user) {
+            console.error('🔐 [REAUTH] ERROR: No user is currently logged in');
+            throw new Error("No user is currently logged in");
+        }
+
+        console.log('🔐 [REAUTH] Creating credential for user:', user.email);
+        const credential = EmailAuthProvider.credential(email, password);
+        
+        console.log('🔐 [REAUTH] Attempting to reauthenticate...');
+        await reauthenticateWithCredential(user, credential);
+        
+        console.log('🔐 [REAUTH] ✅ Re-authentication successful');
+        return true;
+    } catch (error) {
+        console.error('🔐 [REAUTH] ❌ Re-authentication failed:', error.code, error.message);
+        throw error;
+    }
+};
+
+// ✅ Delete User Account (with proper order of operations)
+export const deleteUserAccount = async (uid) => {
+    try {
+        console.log('🗑️ [DELETE] Starting account deletion for UID:', uid);
+        
+        const user = auth.currentUser;
+        if (!user) {
+            console.error('🗑️ [DELETE] ERROR: No user is currently logged in');
+            throw new Error("No user is currently logged in");
+        }
+
+        if (user.uid !== uid) {
+            console.error('🗑️ [DELETE] ERROR: UID mismatch - Current:', user.uid, 'Requested:', uid);
+            throw new Error("User ID mismatch");
+        }
+
+        // Step 1: Get user data to check if seller
+        console.log('🗑️ [DELETE] Step 1: Fetching user data...');
+        const userDoc = await getDoc(doc(db, "users", uid));
+        const userData = userDoc.exists() ? userDoc.data() : null;
+        console.log('🗑️ [DELETE] User role:', userData?.role);
+
+        // Step 2: Delete user data from Firestore FIRST
+        console.log('🗑️ [DELETE] Step 2: Deleting user document from Firestore...');
+        await deleteDoc(doc(db, "users", uid));
+        console.log('🗑️ [DELETE] ✅ User document deleted from Firestore');
+
+        // Step 3: If seller, also delete from sellers collection
+        if (userData?.role === "Seller" && userData?.sellerId) {
+            console.log('🗑️ [DELETE] Step 3: Deleting seller document for sellerId:', userData.sellerId);
+            try {
+                await deleteDoc(doc(db, "sellers", userData.sellerId));
+                console.log('🗑️ [DELETE] ✅ Seller document deleted from Firestore');
+            } catch (sellerError) {
+                console.warn('🗑️ [DELETE] ⚠️ Seller document not found or already deleted');
+            }
+        } else {
+            console.log('🗑️ [DELETE] Step 3: Skipped (not a seller account)');
+        }
+
+        // Step 4: Delete user from Firebase Auth LAST
+        console.log('🗑️ [DELETE] Step 4: Deleting user from Firebase Auth...');
+        await user.delete();
+        console.log('🗑️ [DELETE] ✅ User deleted from Firebase Auth');
+
+        console.log('🗑️ [DELETE] ✅ Account deletion completed successfully');
+        return true;
+    } catch (error) {
+        console.error('🗑️ [DELETE] ❌ Account deletion failed:', error.code, error.message);
+        throw error;
+    }
+};
+
+// ✅ Delete Account (Legacy - kept for backward compatibility)
 export const deleteAccount = async () => {
     try {
         const user = auth.currentUser;
@@ -248,6 +336,10 @@ export const addNotification = async (sellerId, type, message) => {
 // ✅ Get all notifications for a seller
 export const getNotificationsBySeller = async (sellerId) => {
     try {
+        if (!sellerId) {
+            console.warn("getNotificationsBySeller: sellerId is required");
+            return [];
+        }
         const q = query(collection(db, "notifications"), where("sellerId", "==", sellerId));
         const querySnapshot = await getDocs(q);
         const notifications = [];
@@ -257,7 +349,7 @@ export const getNotificationsBySeller = async (sellerId) => {
         return notifications;
     } catch (error) {
         console.error("Error fetching notifications:", error.message);
-        throw error;
+        return []; // Return empty array on error
     }
 };
 
@@ -291,13 +383,18 @@ export const deleteNotification = async (id) => {
 
 export const listProductsBySeller = async (sellerId) => {
     try {
+        if (!sellerId) {
+            console.warn("listProductsBySeller: sellerId is required");
+            return [];
+        }
         const q = query(collection(db, "products"), where("sellerId", "==", sellerId));
         const snap = await getDocs(q);
         const items = [];
         snap.forEach(d => items.push({ id: d.id, ...d.data() }));
         return items;
     } catch (e) {
-        throw e;
+        console.error("Error listing products by seller:", e);
+        return [];
     }
 };
 
@@ -418,6 +515,10 @@ export const updateDelivery = async (id, updates) => {
 
 export const listOrdersBySeller = async (sellerId) => {
     try {
+        if (!sellerId) {
+            console.warn("listOrdersBySeller: sellerId is required");
+            return [];
+        }
         const q = query(collection(db, "orders"), where("sellerId", "==", sellerId));
         const snap = await getDocs(q);
         const items = [];
@@ -425,7 +526,7 @@ export const listOrdersBySeller = async (sellerId) => {
         return items;
     } catch (e) {
         console.error("Error listing orders:", e);
-        throw e;
+        return [];
     }
 };
 
@@ -448,12 +549,39 @@ export const getUserProfile = async (uid) => {
         const userRef = doc(db, "users", uid);
         const snap = await getDoc(userRef);
         if (snap.exists()) {
-            return { uid, ...snap.data() };
+            const userData = { uid, ...snap.data() };
+            
+            // If user is a seller, also fetch seller data for up-to-date status
+            if (userData.role === "Seller" && userData.sellerId) {
+                try {
+                    console.log('getUserProfile: Fetching seller data for sellerId:', userData.sellerId);
+                    const sellerDoc = await getDoc(doc(db, "sellers", userData.sellerId));
+                    if (sellerDoc.exists()) {
+                        const sellerData = sellerDoc.data();
+                        console.log('getUserProfile: Fetched seller data:', sellerData);
+                        
+                        // Merge seller data with user data (prioritize seller data for status)
+                        const mergedData = {
+                            ...userData,
+                            ...sellerData,
+                            uid: userData.uid, // Keep original uid
+                            status: sellerData.status || userData.status // Use seller status if available
+                        };
+                        console.log('getUserProfile: Merged data with status:', mergedData.status);
+                        return mergedData;
+                    }
+                } catch (sellerError) {
+                    console.error("getUserProfile: Error fetching seller data:", sellerError);
+                    // Return user data even if seller data fetch fails
+                }
+            }
+            
+            return userData;
         }
         return null;
     } catch (error) {
         console.error("Error getting user profile:", error);
-        throw error;
+        return null; // Return null instead of throwing error
     }
 };
 
