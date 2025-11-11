@@ -1,16 +1,16 @@
 // screens/Login.js - COMPLETELY REWRITTEN FOR STABILITY
-import React, { useState, useEffect, useRef } from "react";
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { login, loadCartFromFirebase } from "../Helper/firebaseHelper";
-import { setRole, setUser, initializeCart } from '../_redux/Slices/HomeDataSlice';
 import { Ionicons } from '@expo/vector-icons';
-import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { auth } from '../../firebase';
+import { login } from "../Helper/firebaseHelper";
+import { setRole, setUser } from '../_redux/Slices/HomeDataSlice';
 
 const Login = ({ navigation }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("awais1122@gmail.com");
+  const [password, setPassword] = useState("112233");
   const [loading, setLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const loginInProgress = useRef(false);
@@ -23,6 +23,14 @@ const Login = ({ navigation }) => {
     // Reset login attempt flag when component mounts
     loginInProgress.current = false;
   }, [selectedRole]);
+
+  const normalizeRole = (roleValue) => {
+    const value = (roleValue || "").toString().trim().toLowerCase();
+    if (value === "seller") return "Seller";
+    if (value === "customer") return "Customer";
+    if (value === "pending") return "pending";
+    return "";
+  };
 
   const handleLogin = async () => {
     // Validation
@@ -90,9 +98,17 @@ const Login = ({ navigation }) => {
       console.log('✅ Role validation passed');
 
       // Step 3: Determine final role (handle pending sellers)
-      let finalRole = userData.role || selectedRole || "Customer";
-      if (userData.role && userData.status && userData.status.toString().toLowerCase() === "pending") {
+      const normalizedDbRole = normalizeRole(userData.role);
+      const normalizedSelectedRole = normalizeRole(selectedRole);
+
+      let finalRole = "Customer";
+
+      if (userData.status && userData.status.toString().toLowerCase() === "pending") {
         finalRole = "pending";
+      } else if (normalizedDbRole) {
+        finalRole = normalizedDbRole;
+      } else if (normalizedSelectedRole) {
+        finalRole = normalizedSelectedRole;
       }
 
       console.log('📝 Final role:', finalRole);
@@ -103,43 +119,46 @@ const Login = ({ navigation }) => {
       dispatch(setUser(userData));
 
       // Step 5: Load cart
-      console.log('Step 3: Loading cart...');
-      try {
-        const cartData = await loadCartFromFirebase(userData.uid);
-        dispatch(initializeCart(Array.isArray(cartData) ? cartData : []));
-        console.log('✅ Cart loaded:', cartData?.length || 0, 'items');
-      } catch (cartError) {
-        console.error('⚠️ Cart load error:', cartError);
-        dispatch(initializeCart([]));
-      }
+      // console.log('Step 3: Loading cart...');
+      // try {
+      //   const cartData = await loadCartFromFirebase(userData.uid);
+      //   dispatch(initializeCart(Array.isArray(cartData) ? cartData : []));
+      //   console.log('✅ Cart loaded:', cartData?.length || 0, 'items');
+      // } catch (cartError) {
+      //   console.error('⚠️ Cart load error:', cartError);
+      //   dispatch(initializeCart([]));
+      // }
 
       // Step 6: Clear form
-      setEmail("");
-      setPassword("");
+      // setEmail("");
+      // setPassword("");
       
       // Step 7: Navigate (with small delay to ensure state propagation)
       console.log('Step 4: Navigating to dashboard...');
-      
-      setTimeout(() => {
-        const navigationMap = {
-          'pending': 'PendingApproval',
-          'Seller': 'BottomTabSeller',
-          'Customer': 'BottomTab'
-        };
 
-        const targetScreen = navigationMap[finalRole] || 'BottomTab';
+      setLoading(false);
+      loginInProgress.current = false;
+      
+      // setTimeout(() => {
+      //   const navigationMap = {
+      //     'pending': 'PendingApproval',
+      //     'Seller': 'BottomTabSeller',
+      //     'Customer': 'BottomTab'
+      //   };
+
+      //   const targetScreen = navigationMap[finalRole] || 'BottomTab';
         
-        console.log('🧭 Navigating to:', targetScreen);
+      //   console.log('🧭 Navigating to:', targetScreen);
         
-        navigation.reset({
-          index: 0,
-          routes: [{ name: targetScreen }]
-        });
+      //   navigation.reset({
+      //     index: 0,
+      //     routes: [{ name: targetScreen }]
+      //   });
         
-        loginInProgress.current = false;
-        setLoading(false);
-        console.log('✅ Login complete!');
-      }, 100);
+      //   loginInProgress.current = false;
+      //   setLoading(false);
+      //   console.log('✅ Login complete!');
+      // }, 100);
 
     } catch (error) {
       console.error("❌ Login error:", error);
