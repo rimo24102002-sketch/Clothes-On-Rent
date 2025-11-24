@@ -16,8 +16,13 @@ export default function Products({ navigation }) {
   const categories = getProductCategories();
 
   const load = async () => {
-    if (!sellerId) return setProducts([]);
+    if (!sellerId) {
+      console.warn('ViewProduct: No sellerId found');
+      return setProducts([]);
+    }
+    console.log('ViewProduct: Loading products for sellerId:', sellerId);
     const list = await listProductsBySeller(sellerId);
+    console.log('ViewProduct: Products loaded:', list.length);
     setProducts(list);
   };
 
@@ -253,40 +258,42 @@ export default function Products({ navigation }) {
           </TouchableOpacity>
         }
       />
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
-          <Text style={{ fontSize: 14, color: '#666' }}>Total Products: {products.length}</Text>
-          <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>Approved: {products.filter(p => p.status === 'approved').length} | Pending: {products.filter(p => p.status === 'pending').length}</Text>
-        </View>
-        <FlatList 
-          data={products} 
-          renderItem={renderItem} 
-          keyExtractor={(i) => i.id} 
-          ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-              <Feather name="package" size={48} color="#8E6652" style={{ marginBottom: 16 }} />
-              <Text style={{ fontSize: 16, color: '#666', fontWeight: '600', marginBottom: 8 }}>No products yet</Text>
-              <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', paddingHorizontal: 40 }}>
-                Start by adding your first product to showcase your items
-              </Text>
-              <TouchableOpacity 
-                style={{ 
-                  backgroundColor: '#8E6652', 
-                  paddingHorizontal: 20, 
-                  paddingVertical: 12, 
-                  borderRadius: 8, 
-                  marginTop: 16,
-                  flexDirection: 'row',
-                  alignItems: 'center'
-                }} 
-                onPress={() => navigation.navigate('AddProduct')}
-              >
-                <Feather name="plus" size={16} color="#fff" />
-                <Text style={{ color: '#fff', fontWeight: '600', marginLeft: 6 }}>Add Your First Product</Text>
-              </TouchableOpacity>
-            </View>
-          } 
-        />
+      <FlatList 
+        data={products} 
+        renderItem={renderItem} 
+        keyExtractor={(i) => i.id}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListHeaderComponent={
+          <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
+            <Text style={{ fontSize: 14, color: '#666' }}>Total Products: {products.length}</Text>
+            <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>Approved: {products.filter(p => p.status === 'approved').length} | Pending: {products.filter(p => p.status === 'pending').length}</Text>
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <Feather name="package" size={48} color="#8E6652" style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 16, color: '#666', fontWeight: '600', marginBottom: 8 }}>No products yet</Text>
+            <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', paddingHorizontal: 40 }}>
+              Start by adding your first product to showcase your items
+            </Text>
+            <TouchableOpacity 
+              style={{ 
+                backgroundColor: '#8E6652', 
+                paddingHorizontal: 20, 
+                paddingVertical: 12, 
+                borderRadius: 8, 
+                marginTop: 16,
+                flexDirection: 'row',
+                alignItems: 'center'
+              }} 
+              onPress={() => navigation.navigate('AddProduct')}
+            >
+              <Feather name="plus" size={16} color="#fff" />
+              <Text style={{ color: '#fff', fontWeight: '600', marginLeft: 6 }}>Add Your First Product</Text>
+            </TouchableOpacity>
+          </View>
+        } 
+      />
         <Modal visible={!!editing} transparent onRequestClose={() => setEditing(null)}>
           <TouchableOpacity 
             style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
@@ -408,7 +415,6 @@ export default function Products({ navigation }) {
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
-      </ScrollView>
     </SafeAreaView>
   );
 }

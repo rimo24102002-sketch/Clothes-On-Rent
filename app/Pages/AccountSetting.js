@@ -1,8 +1,12 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from "@expo/vector-icons";
+import { useSelector } from 'react-redux';
 
 export default function AccountSettings({ navigation }) {
+    const user = useSelector((state) => state.home.user);
+
+  
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
     
@@ -63,11 +67,21 @@ export default function AccountSettings({ navigation }) {
         <Text style={{ fontSize: 16, fontWeight: '635', marginVertical: 10 }}>Support</Text>
         <TouchableOpacity 
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: 1, borderColor: '#eee' }}
-          onPress={() => navigation.navigate('HelpCenter')}
+          onPress={() => navigation.navigate('SellerComplaint')}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Feather name="help-circle" size={20} color="#8E6652" />
-            <Text style={{ fontSize: 15, marginLeft: 12 }}>Help Center</Text>
+            <Feather name="alert-circle" size={20} color="#8E6652" />
+            <Text style={{ fontSize: 15, marginLeft: 12 }}>Submit Complaint</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color="#888" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: 1, borderColor: '#eee' }}
+          onPress={() => navigation.navigate('SellerComplaints')}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>     
+            <Feather name="list" size={20} color="#8E6652" />
+            <Text style={{ fontSize: 15, marginLeft: 12 }}>View Complaints</Text>
           </View>
           <Feather name="chevron-right" size={20} color="#888" />
         </TouchableOpacity>
@@ -81,6 +95,7 @@ export default function AccountSettings({ navigation }) {
           </View>
           <Feather name="chevron-right" size={20} color="#888" />
         </TouchableOpacity>
+        
 
         <Text style={{ fontSize: 16, fontWeight: '635', marginVertical: 10,marginTop:20 }}>Danger Zone</Text>
         <TouchableOpacity 

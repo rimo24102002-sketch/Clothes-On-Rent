@@ -75,7 +75,7 @@ export default function Logout({ navigation }) {
                         index: 0,
                         routes: [{ name: 'Home' }],
                       });
-                      console.log('🏠 Navigated to Home screen after logout');
+                      console.log('� Navigated to Home screen after logout');
                     }
                   }
                 ]

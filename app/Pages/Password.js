@@ -173,7 +173,12 @@ const Password = ({ navigation }) => {
 
                 {/* Current Password */}
                 <View style={{ marginBottom: 20 }}>
-                    <Text style={{ fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 8 }}>Current Password</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <Text style={{ fontSize: 14, fontWeight: "600", color: "#333" }}>Current Password</Text>
+                        <TouchableOpacity onPress={handleForgotPassword}>
+                            <Text style={{ fontSize: 13, color: "#8E6652", fontWeight: "600" }}>Forgot Password?</Text>
+                        </TouchableOpacity>
+                    </View>
                     <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#E0E0E0", paddingHorizontal: 16 }}>
                         <TextInput
                             placeholder="Enter current password"

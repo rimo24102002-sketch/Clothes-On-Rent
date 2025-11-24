@@ -101,6 +101,9 @@ export default function AddProduct({ navigation }) {
       const availableSizes = getAvailableSizes(stockDistribution);
       
       const productData = {
+        sellerId: sellerId, // Add sellerId to product data
+        sellerName: user?.name || 'Seller',
+        sellerEmail: user?.email || '',
         name: form.name.trim(),
         price: Number(form.price),
         securityFee: Number(form.securityFee) || 0,
@@ -113,7 +116,9 @@ export default function AddProduct({ navigation }) {
         lastStockUpdate: new Date().toISOString()
       };
 
-      await addProduct(sellerId, productData);
+      console.log('AddProduct: Submitting product with sellerId:', sellerId);
+      const productId = await addProduct(productData);
+      console.log('AddProduct: Product added successfully with ID:', productId);
       
       Alert.alert(
         '🎉 Product Submitted Successfully!',

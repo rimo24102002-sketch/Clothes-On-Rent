@@ -398,6 +398,25 @@ export const listProductsBySeller = async (sellerId) => {
     }
 };
 
+// ✅ Add a new product
+export const addProduct = async (productData) => {
+    try {
+        const product = {
+            ...productData,
+            status: 'pending', // Default status - pending admin approval
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        };
+        
+        const docRef = await addDoc(collection(db, "products"), product);
+        console.log("Product added with ID:", docRef.id);
+        return docRef.id;
+    } catch (e) {
+        console.error("Error adding product:", e);
+        throw e;
+    }
+};
+
 //--------------------------------
 // 🔹 Categories Services
 //--------------------------------
@@ -417,6 +436,20 @@ export const getCategories = async () => {
     }
 };
 
+// ✅ Get product categories (synchronous) - Returns predefined categories
+export const getProductCategories = () => {
+    return [
+        { id: 'formal', name: 'Formal' },
+        { id: 'casual', name: 'Casual' },
+        { id: 'traditional', name: 'Traditional' },
+        { id: 'party', name: 'Party Wear' },
+        { id: 'wedding', name: 'Wedding' },
+        { id: 'sports', name: 'Sports' },
+        { id: 'ethnic', name: 'Ethnic' },
+        { id: 'seasonal', name: 'Seasonal' }
+    ];
+};
+
 // ✅ Get category by CID
 export const getCategoryByCid = async (cid) => {
     try {
@@ -432,6 +465,11 @@ export const getCategoryByCid = async (cid) => {
         console.error('Error getting category:', error);
         throw error;
     }
+};
+
+// ✅ Get category by ID (alias for getCategoryByCid)
+export const getCategoryById = async (id) => {
+    return getCategoryByCid(id);
 };
 
 export const updateProduct = async (id, updates) => {
@@ -529,6 +567,9 @@ export const listOrdersBySeller = async (sellerId) => {
         return [];
     }
 };
+
+// Alias for backward compatibility
+export const getOrdersBySeller = listOrdersBySeller;
 
 export const updateOrder = async (id, updates) => {
     try {
@@ -789,6 +830,36 @@ export const submitCustomerComplaint = async (complaintData) => {
         return docRef.id;
     } catch (error) {
         console.error("Error submitting customer complaint:", error);
+        throw error;
+    }
+};
+
+// ✅ Submit seller complaint
+export const submitSellerComplaint = async (complaintData) => {
+    try {
+        const docRef = await addDoc(collection(db, "seller_complaints"), {
+            ...complaintData,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        console.log("Seller complaint submitted with ID:", docRef.id);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error submitting seller complaint:", error);
+        throw error;
+    }
+};
+
+export const getSellerComplaints = async (sellerId) => {
+    try {
+        const q = query(collection(db, "seller_complaints"), where("sellerId", "==", sellerId));
+        const snap = await getDocs(q);
+        const complaints = [];
+        snap.forEach(d => complaints.push({ id: d.id, ...d.data() }));
+        return complaints;
+    } catch (error) {
+        console.error("Error getting seller complaints:", error);
         throw error;
     }
 };

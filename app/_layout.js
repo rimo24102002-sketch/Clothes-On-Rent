@@ -26,10 +26,13 @@ import PrivacyPolicy from './Pages/PrivacyPolicy';
 import ProductDetail from './Pages/ProductDetail';
 import Profile from './Pages/Profile';
 import Reviews from './Pages/Reviews';
+import DirectChat from './Pages/DirectChat';
 import SignUp from './Pages/SignUp';
 import Splash from './Pages/Splash';
 import TermsOfService from './Pages/TermsOfService';
 import ViewProduct from './Pages/ViewProduct';
+import SellerComplaint from './Pages/SellerComplaint';
+import SellerComplaints from './Pages/SellerComplaints';
 
 // Redux and Navigation setup
 const Stack = createNativeStackNavigator();
@@ -82,6 +85,8 @@ const SellerStack = () => {
       <Stack.Screen name="Profile" component={Profile} />
       <Stack.Screen name="Delete" component={Delete} />
       <Stack.Screen name="Reviews" component={Reviews} />
+      <Stack.Screen name="DirectChat" component={DirectChat} options={{ headerShown: false }} />
+      <Stack.Screen name="SellerComplaints" component={SellerComplaints} />
       <Stack.Screen name="TermsOfService" component={TermsOfService} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
       <Stack.Screen name="HelpCenter" component={HelpCenter} />
@@ -98,6 +103,7 @@ const SellerStack = () => {
       <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
       <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
       <Stack.Screen name="OrderApproval" component={OrderApproval} options={{ headerShown: false }} />
+      <Stack.Screen name="SellerComplaint" component={SellerComplaint} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );
@@ -183,6 +189,7 @@ const CustomerStack = () => (
 const RenderStack = ({ role, user }) => {
   if (!user?.uid) {
     console.log('🔒 User not authenticated - showing auth stack only');
+
     return (
       <Stack.Navigator
         initialRouteName="Splash"
@@ -203,6 +210,8 @@ const RenderStack = ({ role, user }) => {
  
   // If user is logged in, use their role to determine the stack
   switch (role) {
+
+    
 
     case "Seller":
       // Approved sellers go to seller stack
@@ -240,6 +249,8 @@ const RenderStack = ({ role, user }) => {
 const RootNavigation = () => {
   const role = useSelector((state) => state.home.role);
   const user = useSelector((state) => state.home.user);
+
+  alert (role)
 
   const navigationKey = React.useMemo(() => {
     if (!user?.uid) return 'nav-auth';
