@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import {
   addDoc,
   collection,
@@ -26,6 +27,7 @@ import {
 import { db } from "../../firebase";
 
 const DirectChat = ({ route }) => {
+  const navigation = useNavigation();
   const {
     currentUserId,
     otherUserId,
@@ -221,11 +223,19 @@ const DirectChat = ({ route }) => {
       keyboardVerticalOffset={90}
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{otherUserName}</Text>
-        <Text style={styles.headerSubtitle}>
-          Chatting as{" "}
-          <Text style={styles.headerHighlight}>{currentUserId || "Unknown"}</Text>
-        </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>{otherUserName}</Text>
+          <Text style={styles.headerSubtitle}>
+            Chatting as{" "}
+            <Text style={styles.headerHighlight}>{currentUserId || "Unknown"}</Text>
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -282,6 +292,15 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     elevation: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    marginRight: 15,
+    padding: 4,
+  },
+  headerContent: {
+    flex: 1,
   },
   headerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
   headerSubtitle: { marginTop: 4, fontSize: 14, color: "rgba(255,255,255,0.85)" },

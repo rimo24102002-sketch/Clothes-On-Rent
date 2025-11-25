@@ -11,6 +11,7 @@ import AddProduct from './Pages/AddProduct';
 import BottomTabSeller from './Pages/BottomTabSeller';
 import Delete from './Pages/Delete';
 import Delivery from './Pages/Delivery';
+import DirectChat from './Pages/DirectChat';
 import Email from './Pages/Email';
 import ForgotPassword from './Pages/ForgotPassword';
 import HelpCenter from './Pages/HelpCenter';
@@ -26,13 +27,12 @@ import PrivacyPolicy from './Pages/PrivacyPolicy';
 import ProductDetail from './Pages/ProductDetail';
 import Profile from './Pages/Profile';
 import Reviews from './Pages/Reviews';
-import DirectChat from './Pages/DirectChat';
+import SellerComplaint from './Pages/SellerComplaint';
+import SellerComplaints from './Pages/SellerComplaints';
 import SignUp from './Pages/SignUp';
 import Splash from './Pages/Splash';
 import TermsOfService from './Pages/TermsOfService';
 import ViewProduct from './Pages/ViewProduct';
-import SellerComplaint from './Pages/SellerComplaint';
-import SellerComplaints from './Pages/SellerComplaints';
 
 // Redux and Navigation setup
 const Stack = createNativeStackNavigator();
@@ -47,6 +47,7 @@ import Complain from './Pages/Complain';
 import CPending from './Pages/CPending';
 import CReview from './Pages/CReview';
 import CustomerComplaint from './Pages/CustomerComplaint';
+import CustomerComplaintsList from './Pages/CustomerComplaintsList';
 import Delivered from './Pages/Delivered';
 import Detail from './Pages/Detail';
 import EProfile from './Pages/Eprofile';
@@ -158,6 +159,11 @@ const CustomerStack = () => (
     <Stack.Screen name="Checkout" component={Checkout} options={{ headerShown: false }} />
     <Stack.Screen name="Payment" component={Payment} options={{ headerShown: false }} />
 
+    {/* Complaint Screens */}
+    <Stack.Screen name="CustomerComplaint" component={CustomerComplaint} options={{ headerShown: false }} />
+    <Stack.Screen name="CustomerComplaintsList" component={CustomerComplaintsList} options={{ headerShown: false }} />
+    <Stack.Screen name="DirectChat" component={DirectChat} options={{ headerShown: false }} />
+
     {/* Category & Browse Screens */}
     <Stack.Screen name="Home2" component={Home2} options={{ headerShown: false }} />
     <Stack.Screen name="VTO" component={VTO} options={{ headerShown: false }} />
@@ -167,7 +173,6 @@ const CustomerStack = () => (
 
     {/* Support & Settings Screens */}
     <Stack.Screen name="Complain" component={Complain} options={{ headerShown: false }} />
-    <Stack.Screen name="CustomerComplaint" component={CustomerComplaint} options={{ headerShown: false }} />
     <Stack.Screen name="HelpCenter" component={HelpCenter} options={{ headerShown: false }} />
     <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={{ headerShown: false }} />
     <Stack.Screen name="TermsOfService" component={TermsOfService} options={{ headerShown: false }} />

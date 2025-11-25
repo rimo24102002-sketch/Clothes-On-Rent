@@ -864,6 +864,20 @@ export const getSellerComplaints = async (sellerId) => {
     }
 };
 
+// ✅ Get customer complaints by customerId
+export const getCustomerComplaints = async (customerId) => {
+    try {
+        const q = query(collection(db, "customer_complaints"), where("customerId", "==", customerId));
+        const snap = await getDocs(q);
+        const complaints = [];
+        snap.forEach(d => complaints.push({ id: d.id, ...d.data() }));
+        return complaints;
+    } catch (error) {
+        console.error("Error getting customer complaints:", error);
+        throw error;
+    }
+};
+
 // ✅ Get seller data by sellerId from sellers collection
 export const getSellerData = async (sellerId) => {
     try {
@@ -1319,18 +1333,18 @@ export const getProductsByCategoryName = async (categoryName) => {
 };
 
 // Upload image to Cloudinary
-export const uploadImageToCloudinary = async (imageUri) => {
+export const uploadImageToCloudinary = async (imageUri, folder = 'my-app/profiles/customers', fileName = 'image.jpg') => {
     try {
         const formData = new FormData();
         formData.append('file', {
             uri: imageUri,
             type: 'image/jpeg',
-            name: 'profile.jpg',
+            name: fileName,
         });
         // Unsigned upload preset configured in Cloudinary
         formData.append('upload_preset', 'react_native_uploads');
         // Optional: keep uploads organized
-        formData.append('folder', 'my-app/profiles/customers');
+        formData.append('folder', folder);
 
         // IMPORTANT: Do NOT set Content-Type manually; let fetch set the correct multipart boundary
         const response = await fetch('https://api.cloudinary.com/v1_1/drrr99dz9/image/upload', {
@@ -1352,6 +1366,130 @@ export const uploadImageToCloudinary = async (imageUri) => {
         throw new Error('Cloudinary upload failed: missing secure_url in response');
     } catch (error) {
         console.error('Error uploading image to Cloudinary:', error?.message || error);
+        throw error;
+    }
+};
+
+//--------------------------------
+// 🔹 Bank Services
+//--------------------------------
+
+// ✅ Get all banks
+export const getBanks = async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "banks"));
+        const banks = [];
+        querySnapshot.forEach((doc) => {
+            banks.push({ id: doc.id, ...doc.data() });
+        });
+        // Sort by name
+        return banks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } catch (error) {
+        console.error("Error getting banks:", error);
+        return [];
+    }
+};
+
+// ✅ Get Pakistan banks dummy data
+const getPakistanBanksData = () => {
+    return [
+        { name: 'Allied Bank Limited', code: 'ABL', accountNumber: '0012345678901', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK36ABPA0001234567890123' },
+        { name: 'Askari Bank', code: 'AKBL', accountNumber: '0023456789012', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK37ASCM0002345678901234' },
+        { name: 'Bank Alfalah', code: 'BAFL', accountNumber: '0034567890123', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK38ALFH0003456789012345' },
+        { name: 'Bank Al-Habib', code: 'BAHL', accountNumber: '0045678901234', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK39BAHL0004567890123456' },
+        { name: 'Bank of Punjab', code: 'BOP', accountNumber: '0056789012345', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK40BPUN0005678901234567' },
+        { name: 'Faysal Bank', code: 'FBL', accountNumber: '0067890123456', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK41FAYS0006789012345678' },
+        { name: 'Habib Bank Limited', code: 'HBL', accountNumber: '0078901234567', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK42HABB0007890123456789' },
+        { name: 'JS Bank', code: 'JSBL', accountNumber: '0089012345678', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK43JSBL0008901234567890' },
+        { name: 'MCB Bank', code: 'MCB', accountNumber: '0090123456789', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK44MUCB0009012345678901' },
+        { name: 'Meezan Bank', code: 'MEBL', accountNumber: '0101234567890', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK45MEZN0001012345678901' },
+        { name: 'National Bank of Pakistan', code: 'NBP', accountNumber: '0112345678901', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK46NBPA0001123456789012' },
+        { name: 'Standard Chartered Bank', code: 'SCB', accountNumber: '0123456789012', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK47SCBL0001234567890123' },
+        { name: 'United Bank Limited', code: 'UBL', accountNumber: '0134567890123', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK48UNIL0001345678901234' },
+        { name: 'Bank Islami', code: 'BIPL', accountNumber: '0145678901234', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK49BKIP0001456789012345' },
+        { name: 'Dubai Islamic Bank', code: 'DIB', accountNumber: '0156789012345', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK50DUIB0001567890123456' },
+        { name: 'Sindh Bank', code: 'SBL', accountNumber: '0167890123456', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK51SINB0001678901234567' },
+        { name: 'Soneri Bank', code: 'SNBL', accountNumber: '0178901234567', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK52SONE0001789012345678' },
+        { name: 'Summit Bank', code: 'SMBL', accountNumber: '0189012345678', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK53SUMM0001890123456789' },
+        { name: 'Zarai Taraqiati Bank', code: 'ZTBL', accountNumber: '0190123456789', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK54ZTBL0001901234567890' },
+        { name: 'Al Baraka Bank', code: 'ABPL', accountNumber: '0201234567890', accountTitle: 'Clothes On Rent Pvt Ltd', iban: 'PK55ABPL0002012345678901' },
+    ];
+};
+
+// ✅ Initialize Pakistan banks (call this once to add banks to collection)
+export const initializePakistanBanks = async () => {
+    try {
+        const pakistanBanks = getPakistanBanksData();
+
+        // Check if banks already exist
+        const existingBanks = await getBanks();
+        if (existingBanks.length > 0) {
+            console.log('Banks already initialized. Skipping...');
+            return { success: true, message: 'Banks already exist', count: existingBanks.length };
+        }
+
+        // Add banks to collection
+        const addedBanks = [];
+        for (const bank of pakistanBanks) {
+            try {
+                const docRef = await addDoc(collection(db, "banks"), {
+                    ...bank,
+                    createdAt: new Date().toISOString(),
+                    isActive: true
+                });
+                addedBanks.push({ id: docRef.id, name: bank.name });
+            } catch (error) {
+                console.error(`Error adding bank ${bank.name}:`, error);
+            }
+        }
+
+        console.log(`Successfully initialized ${addedBanks.length} Pakistan banks`);
+        return { success: true, message: `Added ${addedBanks.length} banks`, count: addedBanks.length, banks: addedBanks };
+    } catch (error) {
+        console.error("Error initializing Pakistan banks:", error);
+        throw error;
+    }
+};
+
+// ✅ Force initialize Pakistan banks (deletes existing and recreates - use with caution)
+export const forceInitializePakistanBanks = async () => {
+    try {
+        const pakistanBanks = getPakistanBanksData();
+
+        // Get existing banks
+        const existingBanks = await getBanks();
+        
+        // Delete existing banks
+        if (existingBanks.length > 0) {
+            console.log(`Deleting ${existingBanks.length} existing banks...`);
+            for (const bank of existingBanks) {
+                try {
+                    await deleteDoc(doc(db, "banks", bank.id));
+                } catch (error) {
+                    console.error(`Error deleting bank ${bank.name}:`, error);
+                }
+            }
+        }
+
+        // Add banks to collection
+        const addedBanks = [];
+        for (const bank of pakistanBanks) {
+            try {
+                const docRef = await addDoc(collection(db, "banks"), {
+                    ...bank,
+                    createdAt: new Date().toISOString(),
+                    isActive: true
+                });
+                addedBanks.push({ id: docRef.id, name: bank.name });
+            } catch (error) {
+                console.error(`Error adding bank ${bank.name}:`, error);
+            }
+        }
+
+        console.log(`Successfully initialized ${addedBanks.length} Pakistan banks`);
+        return { success: true, message: `Added ${addedBanks.length} banks`, count: addedBanks.length, banks: addedBanks };
+    } catch (error) {
+        console.error("Error force initializing Pakistan banks:", error);
         throw error;
     }
 };

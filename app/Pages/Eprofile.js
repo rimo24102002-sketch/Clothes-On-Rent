@@ -695,6 +695,46 @@ const Eprofile = () => {
                         style={{
                             flexDirection: "row",
                             alignItems: "center",
+                            padding: 20,
+                            borderBottomWidth: 1,
+                            borderBottomColor: '#f0f0f0'
+                        }}
+                        onPress={() => navigation.navigate('CustomerComplaintsList')}
+                    >
+                        <View style={{
+                            width: 45,
+                            height: 45,
+                            borderRadius: 22.5,
+                            backgroundColor: '#8E6652',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: 15
+                        }}>
+                            <Ionicons name="chatbubbles-outline" size={22} color="#fff" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{
+                                fontSize: 16,
+                                fontWeight: '600',
+                                color: "#8E6652"
+                            }}>
+                                View My Complaints
+                            </Text>
+                            <Text style={{
+                                fontSize: 12,
+                                color: "#999",
+                                marginTop: 2
+                            }}>
+                                View and manage your complaints
+                            </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#8E6652" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
                             padding: 20
                         }}
                         onPress={handleLogout}

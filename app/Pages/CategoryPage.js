@@ -28,10 +28,17 @@ const CategoryPage = () => {
         try {
             setLoading(true);
 
+            // Check if category parameter exists
+            if (!category) {
+                console.error('Category parameter is missing');
+                setLoading(false);
+                return;
+            }
+
             // First, find the category info by name
             const categories = await getCategories();
             const foundCategory = categories.find(cat =>
-                cat.title.toLowerCase() === category.toLowerCase()
+                cat.title && category && cat.title.toLowerCase() === category.toLowerCase()
             );
 
             if (foundCategory) {

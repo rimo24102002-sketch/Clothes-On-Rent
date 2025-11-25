@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, TextInput, Alert } from 'react-native'
-import React, { useEffect } from 'react'
+import React, { useEffect } from 'react';
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useSelector, useDispatch } from 'react-redux';
-import { removeFromCart, updateCartItem, clearCart } from '../_redux/Slices/HomeDataSlice';
-import { saveCartToFirebase, clearCartFromFirebase } from '../Helper/firebaseHelper';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeFromCart, updateCartItem } from '../_redux/Slices/HomeDataSlice';
+import { saveCartToFirebase } from '../Helper/firebaseHelper';
 
 const Cart = ({ navigation }) => {
     const dispatch = useDispatch();
