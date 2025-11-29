@@ -176,7 +176,13 @@ const Payment = ({ navigation }) => {
                 alignItems: 'center'
             }}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTab');
+                        }
+                    }}
                     style={{ marginRight: 15 }}
                 >
                     <Ionicons name="arrow-back" size={24} color="#FFF" />

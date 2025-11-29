@@ -138,7 +138,13 @@ const PendingApproval = ({ navigation }) => {
       {/* Header */}
       <View style={{ backgroundColor: '#8E6652', paddingVertical: 20, paddingHorizontal: 24 }}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Home');
+            }
+          }}
           style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
         >
           <Feather name="arrow-left" size={24} color="#fff" />

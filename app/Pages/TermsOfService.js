@@ -36,7 +36,13 @@ export default function TermsOfService({ navigation }) {
           borderBottomWidth:1,
           borderBottomColor:'#E0E0E0'
         }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTab');
+            }
+          }}>
             <Ionicons name="arrow-back" size={24} color="#8E6652" />
           </TouchableOpacity>
           <Text style={{
@@ -83,7 +89,13 @@ export default function TermsOfService({ navigation }) {
         shadowRadius: 4,
         elevation: 5
       }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('BottomTab');
+          }
+        }}>
           <Ionicons name="arrow-back" size={24} color="#8E6652" />
         </TouchableOpacity>
         <View style={{flex:1, marginLeft:15}}>

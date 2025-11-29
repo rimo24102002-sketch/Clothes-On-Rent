@@ -110,7 +110,13 @@ const CategoryPage = () => {
                 alignItems: 'center'
             }}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTab');
+                        }
+                    }}
                     style={{ marginRight: 15 }}
                 >
                     <Text style={{ color: 'white', fontSize: 18 }}>←</Text>

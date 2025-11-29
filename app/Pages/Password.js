@@ -64,7 +64,11 @@ const Password = ({ navigation }) => {
                             setCurrentPassword("");
                             setNewPassword("");
                             setConfirmPassword("");
+                            if (navigation.canGoBack()) {
                             navigation.goBack();
+                            } else {
+                                navigation.navigate('BottomTab');
+                            }
                         }
                     }
                 ]
@@ -149,7 +153,13 @@ const Password = ({ navigation }) => {
                 marginBottom: 20
             }}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTab');
+                        }
+                    }}
                     style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
                 >
                     <Feather name="arrow-left" size={24} color="#fff" />

@@ -163,7 +163,13 @@ const Cart = ({ navigation }) => {
                         borderRadius: 10,
                         marginTop: 20
                     }}
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTab');
+                        }
+                    }}
                 >
                     <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
                         Continue Shopping

@@ -26,7 +26,13 @@ function PrivacyPolicy({ navigation }) {
     return (
       <SafeAreaView style={{flex:1,backgroundColor:'#F8F9FA'}}>
         <View style={{flexDirection:'row',alignItems:'center',paddingHorizontal:20,paddingVertical:15,backgroundColor:'#fff',borderBottomWidth:1,borderBottomColor:'#E0E0E0'}}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTab');
+            }
+          }}>
             <Ionicons name="arrow-back" size={24} color="#8E6652" />
           </TouchableOpacity>
           <Text style={{fontSize:18,fontWeight:'600',color:'#333',marginLeft:12}}>Privacy Policy</Text>
@@ -56,7 +62,13 @@ function PrivacyPolicy({ navigation }) {
         shadowRadius: 4,
         elevation: 5
       }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('BottomTab');
+          }
+        }}>
           <Ionicons name="arrow-back" size={24} color="#8E6652" />
         </TouchableOpacity>
         <View style={{flex:1, marginLeft:15}}>

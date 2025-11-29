@@ -142,7 +142,13 @@ export default function AddProduct({ navigation }) {
           },
           {
             text: 'View My Products',
-            onPress: () => navigation.goBack(),
+            onPress: () => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('BottomTabSeller');
+              }
+            },
             style: 'default'
           }
         ]

@@ -179,7 +179,13 @@ const OrderApproval = ({ navigation }) => {
                 alignItems: 'center'
             }}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTabSeller');
+                        }
+                    }}
                     style={{ marginRight: 15 }}
                 >
                     <Text style={{ color: 'white', fontSize: 18 }}>←</Text>

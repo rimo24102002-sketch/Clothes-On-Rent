@@ -179,7 +179,13 @@ export default function Profile({ navigation }) {
       <ScrollView contentContainerStyle={{paddingBottom:20}}>
         {/* Header */}
         <View style={{flexDirection:"row",alignItems:"center",paddingHorizontal:24,paddingVertical:20,backgroundColor:"#8E6652"}}>
-          <TouchableOpacity style={{padding:8}} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={{padding:8}} onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTabSeller');
+            }
+          }}>
             <Feather name="chevron-left" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={{fontSize:20,fontWeight:"700",color:"#fff",marginLeft:10}}>Seller Profile</Text>

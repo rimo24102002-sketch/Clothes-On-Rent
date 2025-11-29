@@ -25,7 +25,13 @@ const Delivered = () => {
         marginBottom: 20
       }}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTab');
+            }
+          }}
           style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />

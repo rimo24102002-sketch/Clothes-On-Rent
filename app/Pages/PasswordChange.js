@@ -84,7 +84,11 @@ const PasswordChange = ({ navigation }) => {
                             setCurrentPassword('');
                             setNewPassword('');
                             setConfirmPassword('');
+                            if (nav.canGoBack()) {
                             nav.goBack();
+                            } else {
+                                nav.navigate('BottomTab');
+                            }
                         }
                     }
                 ]
@@ -125,7 +129,13 @@ const PasswordChange = ({ navigation }) => {
                 marginBottom: 20
             }}>
                 <TouchableOpacity
-                    onPress={() => nav.goBack()}
+                    onPress={() => {
+                        if (nav.canGoBack()) {
+                            nav.goBack();
+                        } else {
+                            nav.navigate('BottomTab');
+                        }
+                    }}
                     style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
                 >
                     <Ionicons name="arrow-back" size={24} color="#fff" />

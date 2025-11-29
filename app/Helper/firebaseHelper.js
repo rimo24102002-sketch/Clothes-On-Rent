@@ -17,40 +17,91 @@ export const addData = async (collectionName, data) => {
         console.error("Error adding document: ", e);
     }
 };
-// ✅ Get all data
-export const getAllData = async (collectionName) => {
+// ✅ Get all data with retry logic
+export const getAllData = async (collectionName, retries = 3) => {
     try {
         if (!collectionName) {
             console.error("getAllData: collectionName is required");
             return [];
         }
-        const querySnapshot = await getDocs(collection(db, collectionName));
-        const data = [];
-        querySnapshot.forEach((doc) => {
-            data.push({ id: doc.id, ...doc.data() });
-        });
-        return data;
+        
+        let lastError;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const querySnapshot = await getDocs(collection(db, collectionName));
+                const data = [];
+                querySnapshot.forEach((doc) => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+                if (attempt > 1) {
+                    console.log(`✅ Successfully fetched ${collectionName} on attempt ${attempt}`);
+                }
+                return data;
+            } catch (error) {
+                lastError = error;
+                console.warn(`⚠️ Attempt ${attempt}/${retries} failed for ${collectionName}:`, error.message);
+                
+                // If it's a network error and not the last attempt, wait before retrying
+                if (attempt < retries && (error.code === 'unavailable' || error.message?.includes('network'))) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+                    continue;
+                }
+                
+                // If it's the last attempt or not a network error, throw
+                if (attempt === retries || (error.code !== 'unavailable' && !error.message?.includes('network'))) {
+                    throw error;
+                }
+            }
+        }
+        
+        throw lastError;
     } catch (e) {
         console.error("Error getting documents from", collectionName, ":", e);
-        return []; // Return empty array instead of undefined
+        // Return empty array instead of undefined to prevent crashes
+        return [];
     }
 };
 
-// ✅ Get single document
-export const getDataById = async (collectionName, id) => {
+// ✅ Get single document with retry logic
+export const getDataById = async (collectionName, id, retries = 3) => {
     try {
         if (!collectionName || !id) {
             console.error("getDataById: collectionName and id are required");
             return null;
         }
-        const docRef = doc(db, collectionName, id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
-        } else {
-            console.log("No such document in", collectionName, "with id:", id);
-            return null;
+        
+        let lastError;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const docRef = doc(db, collectionName, id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    if (attempt > 1) {
+                        console.log(`✅ Successfully fetched document ${id} on attempt ${attempt}`);
+                    }
+                    return { id: docSnap.id, ...docSnap.data() };
+                } else {
+                    console.log("No such document in", collectionName, "with id:", id);
+                    return null;
+                }
+            } catch (error) {
+                lastError = error;
+                console.warn(`⚠️ Attempt ${attempt}/${retries} failed for ${collectionName}/${id}:`, error.message);
+                
+                // If it's a network error and not the last attempt, wait before retrying
+                if (attempt < retries && (error.code === 'unavailable' || error.message?.includes('network'))) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+                    continue;
+                }
+                
+                // If it's the last attempt or not a network error, throw
+                if (attempt === retries || (error.code !== 'unavailable' && !error.message?.includes('network'))) {
+                    throw error;
+                }
+            }
         }
+        
+        throw lastError;
     } catch (e) {
         console.error("Error getting document from", collectionName, "with id", id, ":", e);
         return null; // Return null instead of undefined on error

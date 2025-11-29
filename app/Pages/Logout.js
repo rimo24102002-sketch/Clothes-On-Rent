@@ -93,7 +93,11 @@ export default function Logout({ navigation }) {
   };
   
   const handleCancel = () => {
+    if (navigation.canGoBack()) {
     navigation.goBack();
+    } else {
+      navigation.navigate('BottomTab');
+    }
   };
 
   return (

@@ -224,7 +224,13 @@ const DirectChat = ({ route }) => {
     >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTab');
+            }
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />

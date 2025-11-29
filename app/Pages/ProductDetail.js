@@ -16,7 +16,7 @@ import { addToCart } from '../_redux/Slices/HomeDataSlice';
 import { saveCartToFirebase } from '../Helper/firebaseHelper';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { getDataById, createOrder, getCustomerProfile } from '../Helper/firebaseHelper';
+import { getDataById, createOrder, getCustomerProfile, getSellerData } from '../Helper/firebaseHelper';
 
 const { width } = Dimensions.get('window');
 
@@ -34,6 +34,8 @@ export default function ProductDetail({ route }) {
   const [customerProfile, setCustomerProfile] = useState(null);
   const [addingToCart, setAddingToCart] = useState(false);
   const [addressModalVisible, setAddressModalVisible] = useState(false);
+  const [seller, setSeller] = useState(null);
+  const [loadingSeller, setLoadingSeller] = useState(false);
 
   useEffect(() => {
     loadProductData();
@@ -50,13 +52,35 @@ export default function ProductDetail({ route }) {
         if (productData.sizes && productData.sizes.length > 0) {
           setSelectedSize(productData.sizes[0]);
         }
+        // Load seller data if sellerId exists
+        if (productData.sellerId) {
+          loadSellerData(productData.sellerId);
+        }
       }
     } catch (error) {
       console.error('Error loading product:', error);
       Alert.alert('Error', 'Failed to load product details');
+      if (navigation.canGoBack()) {
       navigation.goBack();
+      } else {
+        navigation.navigate('BottomTab');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSellerData = async (sellerId) => {
+    try {
+      setLoadingSeller(true);
+      const sellerData = await getSellerData(sellerId);
+      if (sellerData) {
+        setSeller(sellerData);
+      }
+    } catch (error) {
+      console.error('Error loading seller data:', error);
+    } finally {
+      setLoadingSeller(false);
     }
   };
 
@@ -179,7 +203,13 @@ export default function ProductDetail({ route }) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1DCD1' }}>
         <Text style={{ color: '#8E6652', fontSize: 18 }}>Product not found</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20 }}>
+        <TouchableOpacity onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('BottomTab');
+          }
+        }} style={{ marginTop: 20 }}>
           <Text style={{ color: '#8E6652', fontSize: 16 }}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -198,7 +228,13 @@ export default function ProductDetail({ route }) {
         marginBottom: 20
       }}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTab');
+            }
+          }}
           style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -294,6 +330,117 @@ export default function ProductDetail({ route }) {
               lineHeight: 20
             }}>
               {product.description}
+            </Text>
+          </View>
+        )}
+
+        {/* Seller Information */}
+        {seller && (
+          <View style={{
+            backgroundColor: '#fff',
+            padding: 15,
+            borderRadius: 10,
+            marginBottom: 20,
+            borderLeftWidth: 4,
+            borderLeftColor: '#8E6652'
+          }}>
+            <Text style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: '#8E6652',
+              marginBottom: 12
+            }}>
+              Seller Information
+            </Text>
+            
+            <View style={{ marginBottom: 8 }}>
+              <Text style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: '#333',
+                marginBottom: 4
+              }}>
+                Name:
+              </Text>
+              <Text style={{
+                fontSize: 14,
+                color: '#666'
+              }}>
+                {seller.name || 'N/A'}
+              </Text>
+            </View>
+
+            {seller.email && (
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: '#333',
+                  marginBottom: 4
+                }}>
+                  Email:
+                </Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: '#666'
+                }}>
+                  {seller.email}
+                </Text>
+              </View>
+            )}
+
+            {seller.address && (
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{
+                  fontSize: 14,
+                  fontWeight: '600',
+                  color: '#333',
+                  marginBottom: 4
+                }}>
+                  Address:
+                </Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: '#666'
+                }}>
+                  {seller.address}
+                </Text>
+              </View>
+            )}
+
+            {seller.sellerId && (
+              <View style={{
+                marginTop: 8,
+                paddingTop: 8,
+                borderTopWidth: 1,
+                borderTopColor: '#eee'
+              }}>
+                <Text style={{
+                  fontSize: 12,
+                  color: '#999'
+                }}>
+                  Seller ID: {seller.sellerId}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {loadingSeller && (
+          <View style={{
+            backgroundColor: '#fff',
+            padding: 15,
+            borderRadius: 10,
+            marginBottom: 20,
+            alignItems: 'center'
+          }}>
+            <ActivityIndicator size="small" color="#8E6652" />
+            <Text style={{
+              fontSize: 14,
+              color: '#666',
+              marginTop: 8
+            }}>
+              Loading seller information...
             </Text>
           </View>
         )}

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Dimensions, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Alert, Modal } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
-import { getBanks, initializePakistanBanks, uploadImageToCloudinary } from '../Helper/firebaseHelper';
+import { getBanks, initializePakistanBanks, uploadImageToCloudinary, createOrder, clearCartFromFirebase } from '../Helper/firebaseHelper';
+import { clearCart } from '../_redux/Slices/HomeDataSlice';
 
 const { width } = Dimensions.get('window');
 
 export default function Checkout({ navigation }) {
+    const dispatch = useDispatch();
+    const user = useSelector((state) => state.home.user);
     const cartItems = useSelector((state) => state.home.cart || []);
     const [fullName, setFullName] = useState('');
     const [streetAddress, setStreetAddress] = useState('');
@@ -120,7 +123,7 @@ export default function Checkout({ navigation }) {
         return calculateSubtotal() + calculateSecurityFees() + shippingCost;
     };
 
-    const handleContinueToPayment = async () => {
+    const handleSubmitOrder = async () => {
         // Validate shipping info
         if (!fullName.trim() || !streetAddress.trim() || !city.trim() || !stateProvince.trim() || !phoneNumber.trim()) {
             Alert.alert('Required', 'Please fill in all shipping fields');
@@ -137,6 +140,19 @@ export default function Checkout({ navigation }) {
                 Alert.alert('Required', 'Please upload transaction receipt for bank transfer.');
                 return;
             }
+        }
+
+        // Validate user and cart
+        if (!user?.uid) {
+            Alert.alert('Error', 'Please log in to place an order');
+            navigation.navigate('Login');
+            return;
+        }
+
+        if (!cartItems || cartItems.length === 0) {
+            Alert.alert('Error', 'Your cart is empty');
+            navigation.navigate('Cart');
+            return;
         }
 
         try {
@@ -165,16 +181,92 @@ export default function Checkout({ navigation }) {
                 }
             }
 
-            // Navigate to Payment page (or directly to Order if you want to skip Payment page)
-            navigation.navigate('Payment', {
-                shippingInfo: {
-                    fullName,
-                    streetAddress,
-                    city,
-                    stateProvince,
-                    phoneNumber,
-                    shippingMethod: selectedShipping
-                },
+            // Prepare shipping info
+            const shippingInfo = {
+                fullName,
+                streetAddress,
+                city,
+                stateProvince,
+                phoneNumber,
+                shippingMethod: selectedShipping
+            };
+
+            // Group cart items by seller
+            const ordersBySeller = {};
+            
+            cartItems.forEach(item => {
+                const sellerId = item.sellerId || item.uid;
+                if (!ordersBySeller[sellerId]) {
+                    ordersBySeller[sellerId] = [];
+                }
+                ordersBySeller[sellerId].push(item);
+            });
+
+            // Create order for each seller
+            const orderIds = [];
+            
+            for (const [sellerId, items] of Object.entries(ordersBySeller)) {
+                // Calculate totals for this seller's items
+                const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const securityFees = items.reduce((sum, item) => sum + ((item.securityFee || 0) * item.quantity), 0);
+                const shippingCost = selectedShipping === 'home' ? 500 : 0;
+                const total = subtotal + securityFees + shippingCost;
+
+                // Prepare order data
+                const orderData = {
+                    customerId: user.uid,
+                    customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Customer',
+                    customerEmail: user.email,
+                    customerPhone: phoneNumber || user.phone || '',
+                    sellerId: sellerId,
+                    items: items.map(item => ({
+                        productId: item.productId || item.id,
+                        name: item.name,
+                        imageUrl: item.imageUrl,
+                        price: item.price,
+                        securityFee: item.securityFee || 0,
+                        size: item.size,
+                        quantity: item.quantity,
+                        categoryName: item.categoryName
+                    })),
+                    shippingInfo: shippingInfo,
+                    paymentInfo: {
+                        method: paymentMethod || 'cod',
+                        ...(paymentMethod === 'bank' && selectedBank && {
+                            bankTransfer: {
+                                bankId: selectedBank.id,
+                                bankName: selectedBank.name,
+                                accountNumber: selectedBank.accountNumber,
+                                accountTitle: selectedBank.accountTitle,
+                                transactionScreenshot: receiptUrl || null
+                            }
+                        })
+                    },
+                    totals: {
+                        subtotal: subtotal,
+                        securityFees: securityFees,
+                        shippingCost: shippingCost,
+                        total: total
+                    },
+                    status: 'pending',
+                };
+
+                // Create order in Firestore
+                const id = await createOrder(orderData);
+                orderIds.push(id);
+                console.log(`Order created for seller ${sellerId}:`, id);
+            }
+
+            // Clear cart from Redux
+            dispatch(clearCart());
+            
+            // Clear cart from Firebase
+            await clearCartFromFirebase(user.uid);
+
+            console.log('Orders created successfully:', orderIds);
+
+            // Navigate to Order success page
+            navigation.navigate('Order', {
                 paymentMethod,
                 selectedBank: selectedBank ? {
                     id: selectedBank.id,
@@ -182,12 +274,23 @@ export default function Checkout({ navigation }) {
                     accountNumber: selectedBank.accountNumber,
                     accountTitle: selectedBank.accountTitle
                 } : null,
-                receiptUrl,
+                screenshotUrl: receiptUrl,
+                shippingInfo: shippingInfo,
                 orderTotal: calculateTotal()
             });
+
         } catch (error) {
-            console.error('Error processing checkout:', error);
-            Alert.alert('Error', 'Failed to process checkout. Please try again.');
+            console.error('Error creating order:', error);
+            Alert.alert(
+                'Error',
+                'Failed to create order. Please try again.',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {}
+                    }
+                ]
+            );
         } finally {
             setProcessing(false);
         }
@@ -214,7 +317,13 @@ export default function Checkout({ navigation }) {
             }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <TouchableOpacity
-                        onPress={() => navigation.goBack()}
+                        onPress={() => {
+                            if (navigation.canGoBack()) {
+                                navigation.goBack();
+                            } else {
+                                navigation.navigate('BottomTab');
+                            }
+                        }}
                         style={{ marginRight: 15 }}
                     >
                         <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -822,7 +931,7 @@ export default function Checkout({ navigation }) {
                 shadowRadius: 4
             }}>
                 <TouchableOpacity
-                    onPress={handleContinueToPayment}
+                    onPress={handleSubmitOrder}
                     disabled={processing || uploadingReceipt}
                     style={{
                         backgroundColor: (processing || uploadingReceipt) ? '#ccc' : '#8E6652',
@@ -842,15 +951,15 @@ export default function Checkout({ navigation }) {
                         <>
                             <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
                             <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold' }}>
-                                {uploadingReceipt ? 'Uploading Receipt...' : 'Processing...'}
+                                {uploadingReceipt ? 'Uploading Receipt...' : 'Placing Order...'}
                             </Text>
                         </>
                     ) : (
                         <>
-                            <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', marginRight: 8 }}>
-                                Continue to Payment
+                            <Ionicons name="checkmark-circle" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                            <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold' }}>
+                                Place Order
                             </Text>
-                            <Ionicons name="arrow-forward" size={20} color="#FFF" />
                         </>
                     )}
                 </TouchableOpacity>

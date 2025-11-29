@@ -41,7 +41,13 @@ const Detail = ({ navigation }) => {
         zIndex: 10
       }}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('BottomTab');
+            }
+          }}
           style={{
             width: 40,
             height: 40,

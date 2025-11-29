@@ -81,7 +81,11 @@ export default function Email({ navigation }) {
               setSubject("");
               setMessage("");
               // Navigate back
+              if (navigation.canGoBack()) {
               navigation.goBack();
+              } else {
+                navigation.navigate('BottomTab');
+              }
             }
           }
         ]
@@ -101,7 +105,13 @@ export default function Email({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', backgroundColor: '#fff' }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('BottomTab');
+          }
+        }}>
           <Feather name="chevron-left" size={24} color="#8E6652" />
         </TouchableOpacity>
         <Text style={{ fontSize: 18, fontWeight: '600', marginLeft: 10, color: '#333' }}>Email Support</Text>

@@ -119,7 +119,13 @@ const InitializeBanks = () => {
         <ScrollView style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTab');
+                        }
+                    }}
                     style={styles.backButton}
                 >
                     <Text style={styles.backButtonText}>← Back</Text>

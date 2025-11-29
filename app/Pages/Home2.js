@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Carousel from "react-native-reanimated-carousel";
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getAllProducts, getCategories, getSellerData } from '../Helper/firebaseHelper';
+import { getAllProducts, getCategories, getSellerData, getAllData } from '../Helper/firebaseHelper';
 
 const { width } = Dimensions.get("window");
 
@@ -14,8 +14,11 @@ const Home2 = () => {
     const [sellersInfo, setSellersInfo] = useState({}); // Store seller info by sellerId
     const [loading, setLoading] = useState(true);
     const [productsLoading, setProductsLoading] = useState(true);
+    const [sliderImages, setSliderImages] = useState([]);
+    const [slidersLoading, setSlidersLoading] = useState(true);
 
-    const images = [
+    // Fallback images if no sliders are found
+    const fallbackImages = [
         require("./Slide.png"),
         require("./Slider3.png"),
         require("./Slide4.png"),
@@ -24,6 +27,7 @@ const Home2 = () => {
     useEffect(() => {
         fetchCategories();
         fetchProducts();
+        fetchSliders();
     }, []);
 
     const fetchCategories = async () => {
@@ -72,6 +76,45 @@ const Home2 = () => {
             console.error('Error fetching products:', error);
         } finally {
             setProductsLoading(false);
+        }
+    };
+
+    const fetchSliders = async () => {
+        try {
+            setSlidersLoading(true);
+            const fetchedSliders = await getAllData('sliders');
+            
+            // Filter only active sliders and sort by order
+            const activeSliders = fetchedSliders
+                .filter(slider => slider.isActive === true && slider.imageUrl)
+                .sort((a, b) => {
+                    // Sort by order field (ascending), if order is same, sort by createdAt
+                    const orderA = a.order || 0;
+                    const orderB = b.order || 0;
+                    if (orderA !== orderB) {
+                        return orderA - orderB;
+                    }
+                    // If order is same, sort by createdAt (newest first)
+                    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return dateB - dateA;
+                });
+            
+            console.log("Active Sliders:", activeSliders.length);
+            
+            // Map to image URLs for carousel
+            const sliderUrls = activeSliders.map(slider => ({
+                uri: slider.imageUrl,
+                id: slider.id
+            }));
+            
+            setSliderImages(sliderUrls.length > 0 ? sliderUrls : fallbackImages);
+        } catch (error) {
+            console.error('Error fetching sliders:', error);
+            // Use fallback images on error
+            setSliderImages(fallbackImages);
+        } finally {
+            setSlidersLoading(false);
         }
     };
 
@@ -204,7 +247,13 @@ const Home2 = () => {
                 alignItems: 'center',
             }}>
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('BottomTab');
+                        }
+                    }}
                     style={{ marginRight: 15 }}
                 >
                     <Icon name="arrow-back" size={24} color="#fff" />
@@ -228,21 +277,46 @@ const Home2 = () => {
             >
                 {/* Carousel */}
                 <View style={{ justifyContent: "center", marginTop: 10 }}>
+                    {slidersLoading ? (
+                        <View style={{ 
+                            height: 200, 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            marginHorizontal: 20,
+                            backgroundColor: '#f0f0f0',
+                            borderRadius: 12
+                        }}>
+                            <ActivityIndicator size="large" color="#8E6652" />
+                            <Text style={{ marginTop: 10, color: '#666' }}>Loading sliders...</Text>
+                        </View>
+                    ) : sliderImages.length > 0 ? (
                     <Carousel 
                         loop 
                         width={width} 
                         height={200} 
                         autoPlay={true} 
-                        data={images} 
+                            data={sliderImages} 
                         scrollAnimationDuration={1000} 
                         renderItem={({ item }) => (
                             <Image 
-                                source={item} 
+                                    source={typeof item === 'object' && item.uri ? { uri: item.uri } : item} 
                                 style={{ width: "90%", height: "100%", borderRadius: 12, marginBottom: 40, marginHorizontal: 20 }} 
                                 resizeMode="cover" 
                             />
                         )} 
                     />
+                    ) : (
+                        <View style={{ 
+                            height: 200, 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            marginHorizontal: 20,
+                            backgroundColor: '#f0f0f0',
+                            borderRadius: 12
+                        }}>
+                            <Text style={{ color: '#666' }}>No slider images available</Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Categories Section */}

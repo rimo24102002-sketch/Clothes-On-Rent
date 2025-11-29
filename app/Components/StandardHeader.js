@@ -15,7 +15,14 @@ export default function StandardHeader({
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
         {showBackButton && (
           <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                // Navigate to a default screen if no back stack exists
+                navigation.navigate('BottomTab');
+              }
+            }} 
             style={{ marginRight: 16, padding: 4 }}
           >
             <Feather name="arrow-left" size={24} color={textColor} />

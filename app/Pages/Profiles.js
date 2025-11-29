@@ -182,7 +182,13 @@ const Profiles = ({ navigation }) => {
         dispatch(setUser(updatedUser));
 
         Alert.alert('Success', 'Profile updated successfully!', [
-          { text: 'OK', onPress: () => nav.goBack() }
+          { text: 'OK', onPress: () => {
+            if (nav.canGoBack()) {
+              nav.goBack();
+            } else {
+              nav.navigate('BottomTab');
+            }
+          }}
         ]);
       }
     } catch (error) {
@@ -214,7 +220,13 @@ const Profiles = ({ navigation }) => {
         marginBottom: 20
       }}>
         <TouchableOpacity
-          onPress={() => nav.goBack()}
+          onPress={() => {
+            if (nav.canGoBack()) {
+              nav.goBack();
+            } else {
+              nav.navigate('BottomTab');
+            }
+          }}
           style={{ position: 'absolute', top: 20, left: 20, zIndex: 1 }}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />

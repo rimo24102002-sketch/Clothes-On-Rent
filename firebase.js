@@ -1,6 +1,6 @@
 // firebase.js
 import { initializeApp } from 'firebase/app';
-import { getAuth, getReactNativePersistence } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,12 +15,15 @@ const firebaseConfig = {
   appId: "1:613854293169:web:3dcef0861ff600b3368690",
   measurementId: "G-ZL3QSQSDZX"
 };
+
 // Initialize Firebase
+let app;
 try {
-  var app = initializeApp(firebaseConfig);
+  app = initializeApp(firebaseConfig);
   console.log('✅ Firebase initialized successfully');
 } catch (error) {
   console.error('❌ Error initializing Firebase:', error);
+  throw error;
 }
 
 // Firebase Services with proper persistence
@@ -36,7 +39,11 @@ try {
   console.error('❌ Error configuring Firebase Auth persistence:', error);
 }
 
+// Initialize Firestore
+// React Native Firestore automatically handles offline persistence
 const db = getFirestore(app);
+console.log('✅ Firestore initialized');
+
 const storage = getStorage(app);
 
 console.log('🔥 Firebase services initialized:', {

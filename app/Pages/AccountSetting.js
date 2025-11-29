@@ -11,7 +11,13 @@ export default function AccountSettings({ navigation }) {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
     
       <View style={{ height:80,flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: 1, borderColor: '#ddd',backgroundColor:'#8E6652'}}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('BottomTab');
+          }
+        }}>
           <Feather name="chevron-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={{ fontSize: 20, fontWeight: '700',color:'#fff',marginRight:110}}>Account Settings</Text>
