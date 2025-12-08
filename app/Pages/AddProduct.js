@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   SafeAreaView, 
   ScrollView, 
@@ -14,7 +14,7 @@ import {
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useSelector } from 'react-redux';
-import { addProduct, uploadImageToCloudinary, getProductCategories, getAvailableSizes } from '../Helper/firebaseHelper';
+import { addProduct, uploadImageToCloudinary, getCategories, getAvailableSizes } from '../Helper/firebaseHelper';
 import StandardHeader from '../Components/StandardHeader';
 
 export default function AddProduct({ navigation }) {
@@ -23,8 +23,8 @@ export default function AddProduct({ navigation }) {
   
   const [loading, setLoading] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  
-  const categories = getProductCategories();
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   
   const [form, setForm] = useState({
     name: '',
@@ -36,6 +36,40 @@ export default function AddProduct({ navigation }) {
     imageUrl: '',
     stock: { S: '', M: '', L: '', XL: '' } // Let seller decide per size
   });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const fetchedCategories = await getCategories();
+      
+      // Map categories to match the expected format
+      // Categories from Firestore have: cid (document ID), name or title, etc.
+      const mappedCategories = fetchedCategories.map(cat => ({
+        id: cat.cid || cat.id,
+        name: cat.name || cat.title || 'Unnamed Category',
+        title: cat.title || cat.name || 'Unnamed Category',
+        description: cat.description || '',
+        color: cat.color || '#8E6652'
+      }));
+      
+      // Filter out categories without name or title
+      const validCategories = mappedCategories.filter(cat => cat.name && cat.id);
+      
+      setCategories(validCategories);
+      console.log('Fetched categories:', validCategories.length);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      Alert.alert('Error', 'Failed to load categories. Please try again.');
+      // Set empty array on error
+      setCategories([]);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   const handleImagePick = async () => {
     try {
@@ -59,7 +93,12 @@ export default function AddProduct({ navigation }) {
   };
 
   const handleCategorySelect = (category) => {
-    setForm({ ...form, categoryId: category.id, categoryName: category.name });
+    const categoryName = category.name || category.title || '';
+    setForm({ 
+      ...form, 
+      categoryId: category.id, 
+      categoryName: categoryName 
+    });
     setCategoryModalVisible(false);
   };
 
@@ -157,6 +196,7 @@ export default function AddProduct({ navigation }) {
       console.error('Error adding product:', error);
       Alert.alert('Error', 'Failed to add product. Please try again.');
     } finally {
+      setLoading(false);
     }
   };
 
@@ -496,47 +536,62 @@ export default function AddProduct({ navigation }) {
             </View>
 
             <ScrollView>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  onPress={() => handleCategorySelect(category)}
-                  style={{
-                    backgroundColor: form.categoryId === category.id ? '#F1DCD1' : '#f9f9f9',
-                    padding: 16,
-                    borderRadius: 12,
-                    marginBottom: 12,
-                    borderWidth: 2,
-                    borderColor: form.categoryId === category.id ? '#8E6652' : 'transparent'
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                    <View style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: category.color,
-                      marginRight: 10
-                    }} />
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#333' }}>
-                      {category.name}
-                    </Text>
-                    <Text style={{
-                      fontSize: 12,
-                      color: '#666',
-                      marginLeft: 8,
-                      backgroundColor: '#fff',
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                      borderRadius: 4
-                    }}>
-                      {category.id}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 13, color: '#666', marginLeft: 26 }}>
-                    {category.description}
+              {loadingCategories ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#8E6652" />
+                  <Text style={{ marginTop: 10, color: '#666' }}>Loading categories...</Text>
+                </View>
+              ) : categories.length === 0 ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <Text style={{ color: '#666', fontSize: 14, textAlign: 'center' }}>
+                    No categories available. Please contact admin to add categories.
                   </Text>
-                </TouchableOpacity>
-              ))}
+                </View>
+              ) : (
+                categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    onPress={() => handleCategorySelect(category)}
+                    style={{
+                      backgroundColor: form.categoryId === category.id ? '#F1DCD1' : '#f9f9f9',
+                      padding: 16,
+                      borderRadius: 12,
+                      marginBottom: 12,
+                      borderWidth: 2,
+                      borderColor: form.categoryId === category.id ? '#8E6652' : 'transparent'
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                      <View style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: 8,
+                        backgroundColor: category.color || '#8E6652',
+                        marginRight: 10
+                      }} />
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#333' }}>
+                        {category.name || category.title}
+                      </Text>
+                      <Text style={{
+                        fontSize: 12,
+                        color: '#666',
+                        marginLeft: 8,
+                        backgroundColor: '#fff',
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 4
+                      }}>
+                        {category.id}
+                      </Text>
+                    </View>
+                    {category.description && (
+                      <Text style={{ fontSize: 13, color: '#666', marginLeft: 26 }}>
+                        {category.description}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>

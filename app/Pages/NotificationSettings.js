@@ -126,10 +126,7 @@ export default function NotificationSettings({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E0E0E0' }}>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#8E6652', marginLeft: 12 }}>Notification Settings</Text>
-      </View>
+    
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20 }}>
         {/* Header Text */}

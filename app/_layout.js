@@ -92,7 +92,7 @@ const SellerStack = () => {
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
       <Stack.Screen name="HelpCenter" component={HelpCenter} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-      <Stack.Screen name="ViewProduct" component={ViewProduct} />
+      <Stack.Screen name="ViewProduct" options={{headerShown:false}} component={ViewProduct} />
       <Stack.Screen name="AddProduct" component={AddProduct} options={{ headerShown: false }} />
       <Stack.Screen name="PickUp" component={PickUp} options={{ headerShown: false }} />
       <Stack.Screen name="Email" component={Email} />
@@ -192,25 +192,25 @@ const CustomerStack = () => (
 );
 
 const RenderStack = ({ role, user }) => {
-  if (!user?.uid) {
-    console.log('🔒 User not authenticated - showing auth stack only');
+  // if (!user?.uid) {
+  //   console.log('🔒 User not authenticated - showing auth stack only');
 
-    return (
-      <Stack.Navigator
-        initialRouteName="Splash"
-        screenOptions={{
-          headerShown: false,
-          headerBackTitleVisible: false,
-        }}
-      >
-        <Stack.Screen name="Splash" component={Splash} options={{ headerShown: false }} />
-        <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
-        <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-        <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
-      </Stack.Navigator>
-    );
-  }
+  //   return (
+  //     <Stack.Navigator
+  //       initialRouteName="Splash"
+  //       screenOptions={{
+  //         headerShown: false,
+  //         headerBackTitleVisible: false,
+  //       }}
+  //     >
+  //       <Stack.Screen name="Splash" component={Splash} options={{ headerShown: false }} />
+  //       <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+  //       <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+  //       <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
+  //       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
+  //     </Stack.Navigator>
+  //   );
+  // }
 
  
   // If user is logged in, use their role to determine the stack

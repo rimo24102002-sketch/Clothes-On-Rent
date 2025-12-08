@@ -103,24 +103,8 @@ const Eprofile = () => {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            await logout();
-                            // Show success popup then navigate
-                            Alert.alert(
-                                'Success',
-                                'You have been logged out successfully from your Customer account.',
-                                [
-                                    {
-                                        text: 'OK',
-                                        onPress: () => {
-                                            // Redux will handle clearing user data; navigate to Login
-                                            navigation.reset({
-                                                index: 0,
-                                                routes: [{ name: 'Login' }]
-                                            });
-                                        }
-                                    }
-                                ]
-                            );
+                            dispatch(setRole(""))
+                            dispatch(setUser({}))
                         } catch (error) {
                             console.error('Error logging out:', error);
                             Alert.alert('Error', 'Failed to logout');
@@ -132,99 +116,30 @@ const Eprofile = () => {
     };
 
     const handleSwitchToSeller = async () => {
-        // Check if user has seller role
-        if (user?.role !== 'Seller') {
-            Alert.alert(
-                'Not a Seller',
-                'You need to have a seller account to access seller features. Would you like to create a seller account?',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                        text: 'Create Seller Account',
-                        onPress: () => {
-                            Alert.alert(
-                                'Contact Support',
-                                'Please contact support to upgrade your account to a seller account.',
-                                [{ text: 'OK' }]
-                            );
-                        }
-                    }
-                ]
-            );
-            return;
-        }
-
         Alert.alert(
-            "Switch to Seller View",
-            "You will be switched to seller mode to manage your products and orders.",
+            "Logout ",
+            "Are you sure you want to logout?",
             [
                 { text: "Cancel", style: "cancel" },
                 {
-                    text: "Switch",
+                    text: "Logout",
+                    style: "destructive",
                     onPress: async () => {
-                        setSwitchingRole(true);
                         try {
-                            console.log('🔄 Switching from Customer to Seller...');
-                            
-                            // Fetch fresh user data from Firebase
-                            const userData = await getUserProfile(user.uid);
-                            
-                            if (userData) {
-                                console.log('✅ User data fetched:', userData);
-                                
-                                // Check seller status
-                                if (userData.status === 'pending') {
-                                    // Seller is pending approval
-                                    dispatch(setRole('pending'));
-                                    dispatch(setUser({
-                                        ...userData,
-                                        currentView: 'Seller'
-                                    }));
-                                    
-                                    navigation.reset({
-                                        index: 0,
-                                        routes: [{ name: 'PendingApproval' }],
-                                    });
-                                    
-                                    Alert.alert(
-                                        'Pending Approval',
-                                        'Your seller account is awaiting admin approval. You will be notified once approved.'
-                                    );
-                                } else {
-                                    // Seller is approved
-                                    dispatch(setRole('Seller'));
-                                    dispatch(setUser({
-                                        ...userData,
-                                        currentView: 'Seller'
-                                    }));
-                                    
-                                    console.log('✅ Redux updated with Seller role');
-                                    
-                                    // Navigate to Seller bottom tabs
-                                    navigation.reset({
-                                        index: 0,
-                                        routes: [{ name: 'BottomTabSeller' }],
-                                    });
-                                    
-                                    console.log('✅ Navigated to Seller view');
-                                    
-                                    // Show success message
-                                    setTimeout(() => {
-                                        Alert.alert(
-                                            'Switched Successfully',
-                                            'You are now in Seller mode. Manage your products and orders!'
-                                        );
-                                    }, 500);
-                                }
-                            } else {
-                                throw new Error('Failed to fetch user data');
-                            }
+                            setSwitchingRole(true);
+
+                            // Clear Redux state
+                            dispatch(setUser({}));
+                            dispatch(setRole(""));
+
+                            // Navigate to Login screen
+                            // navigation.reset({
+                            //     index: 0,
+                            //     routes: [{ name: 'Login' }]
+                            // });
                         } catch (error) {
-                            console.error('❌ Error switching role:', error);
-                            Alert.alert(
-                                'Switch Failed',
-                                'Failed to switch to seller view. Please try again.'
-                            );
+                            console.error('Error logging out:', error);
+                            Alert.alert('Error', 'Failed to logout. Please try again.');
                         } finally {
                             setSwitchingRole(false);
                         }

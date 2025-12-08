@@ -9,7 +9,7 @@ import { login } from "../Helper/firebaseHelper";
 import { setRole, setUser } from '../_redux/Slices/HomeDataSlice';
 
 const Login = ({ navigation }) => {
-  const [email, setEmail] = useState("awais1122@gmail.com");
+  const [email, setEmail] = useState("sukaina@gmail.com");
   const [password, setPassword] = useState("112233");
   const [loading, setLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);

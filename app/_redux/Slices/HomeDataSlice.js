@@ -61,6 +61,8 @@ const homeSlice = createSlice({
 
     setRole: (state, action) => {
       // normalize and store
+      console.log("state.role", state.role);
+      
       const normalized = normalizeRole(action.payload);
       state.role = normalized;
     },

@@ -183,12 +183,12 @@ export default function Checkout({ navigation }) {
 
             // Prepare shipping info
             const shippingInfo = {
-                fullName,
-                streetAddress,
-                city,
-                stateProvince,
-                phoneNumber,
-                shippingMethod: selectedShipping
+                    fullName,
+                    streetAddress,
+                    city,
+                    stateProvince,
+                    phoneNumber,
+                    shippingMethod: selectedShipping
             };
 
             // Group cart items by seller

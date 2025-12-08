@@ -28,15 +28,15 @@ export const getAllData = async (collectionName, retries = 3) => {
         let lastError;
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                const querySnapshot = await getDocs(collection(db, collectionName));
-                const data = [];
-                querySnapshot.forEach((doc) => {
-                    data.push({ id: doc.id, ...doc.data() });
-                });
+        const querySnapshot = await getDocs(collection(db, collectionName));
+        const data = [];
+        querySnapshot.forEach((doc) => {
+            data.push({ id: doc.id, ...doc.data() });
+        });
                 if (attempt > 1) {
                     console.log(`✅ Successfully fetched ${collectionName} on attempt ${attempt}`);
                 }
-                return data;
+        return data;
             } catch (error) {
                 lastError = error;
                 console.warn(`⚠️ Attempt ${attempt}/${retries} failed for ${collectionName}:`, error.message);
@@ -73,17 +73,17 @@ export const getDataById = async (collectionName, id, retries = 3) => {
         let lastError;
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                const docRef = doc(db, collectionName, id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
+        const docRef = doc(db, collectionName, id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
                     if (attempt > 1) {
                         console.log(`✅ Successfully fetched document ${id} on attempt ${attempt}`);
                     }
-                    return { id: docSnap.id, ...docSnap.data() };
-                } else {
-                    console.log("No such document in", collectionName, "with id:", id);
-                    return null;
-                }
+            return { id: docSnap.id, ...docSnap.data() };
+        } else {
+            console.log("No such document in", collectionName, "with id:", id);
+            return null;
+        }
             } catch (error) {
                 lastError = error;
                 console.warn(`⚠️ Attempt ${attempt}/${retries} failed for ${collectionName}/${id}:`, error.message);
