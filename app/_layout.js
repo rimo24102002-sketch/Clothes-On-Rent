@@ -21,6 +21,7 @@ import Logout from './Pages/Logout';
 import Management from './Pages/Management';
 import NotificationSettings from './Pages/NotificationSettings';
 import OrderPayment from './Pages/OrderPayment';
+import RiderManagement from './Pages/RiderManagement';
 import Password from './Pages/Password';
 import PickUp from './Pages/PickUp';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
@@ -98,13 +99,14 @@ const SellerStack = () => {
       <Stack.Screen name="Email" component={Email} />
       <Stack.Screen name="AccountSetting" component={AccountSetting} />
       <Stack.Screen name="Logout" component={Logout} />
-      <Stack.Screen name="OrderPayment" component={OrderPayment} />
+      <Stack.Screen name="OrderPayment" component={OrderPayment} options={{ headerShown: false }} />
       <Stack.Screen name="Delivery" component={Delivery} options={{ headerShown: false }} />
       <Stack.Screen name="Management" component={Management} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettings} />
       <Stack.Screen name="PendingApproval" component={PendingApproval} options={{ headerShown: false }} />
       <Stack.Screen name="OrderApproval" component={OrderApproval} options={{ headerShown: false }} />
       <Stack.Screen name="SellerComplaint" component={SellerComplaint} options={{ headerShown: false }} />
+      <Stack.Screen name="RiderManagement" component={RiderManagement} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );
